@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
@@ -37,56 +37,25 @@
 
             alert("Ticket creado con éxito, te contactaremos pronto.");
             document.getElementById("ticketForm").reset();
-            cargarTickets();
         });
-
-        async function cargarTickets() {
-            const lista = document.getElementById("ticketList");
-            lista.innerHTML = "";
-            const querySnapshot = await getDocs(collection(db, "tickets"));
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                lista.innerHTML += `
-                    <div class='p-4 bg-white shadow rounded-md mb-2'>
-                        <p><strong>${data.asunto}</strong></p>
-                        <p>${data.descripcion}</p>
-                        <p><small>Estado: <span class='estado' data-id='${doc.id}'>${data.estado}</span></small></p>
-                        <select class='estadoSelector' data-id='${doc.id}'>
-                            <option value='Abierto'>Abierto</option>
-                            <option value='En progreso'>En progreso</option>
-                            <option value='Cerrado'>Cerrado</option>
-                        </select>
-                    </div>`;
-            });
-        }
-
-        document.addEventListener("change", async (e) => {
-            if (e.target.classList.contains("estadoSelector")) {
-                const id = e.target.getAttribute("data-id");
-                const nuevoEstado = e.target.value;
-                await updateDoc(doc(db, "tickets", id), { estado: nuevoEstado });
-                alert("Estado actualizado");
-                cargarTickets();
-            }
-        });
-
-        window.onload = cargarTickets;
     </script>
 </head>
-<body class="bg-gradient-to-r from-gray-800 to-blue-400 flex justify-center items-center min-h-screen">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 class="text-xl font-bold mb-4">Crear un Ticket</h2>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen">
+    <div class="w-full bg-cover bg-center h-48" style="background-image: url('[URL_DE_TU_IMAGEN]');">
+        <div class="h-full flex items-center justify-center text-white text-3xl font-bold bg-black bg-opacity-50">
+            Soporte de Tickets
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96 mt-6">
+        <h2 class="text-xl font-bold mb-4 text-center">Crear un Ticket</h2>
+        <p class="text-gray-600 text-sm mb-4">Por favor, llena los siguientes campos para reportar tu problema. Nos pondremos en contacto contigo lo antes posible.</p>
         <form id="ticketForm">
             <input id="nombre" type="text" placeholder="Nombre" required class="w-full p-2 mb-2 border rounded">
             <input id="email" type="email" placeholder="Email" required class="w-full p-2 mb-2 border rounded">
             <input id="asunto" type="text" placeholder="Asunto" required class="w-full p-2 mb-2 border rounded">
-            <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-2 border rounded"></textarea>
-            <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Enviar</button>
+            <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-4 border rounded"></textarea>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Enviar Ticket</button>
         </form>
-    </div>
-    <div class="mt-6 w-96">
-        <h2 class="text-xl font-bold mb-4">Historial de Tickets</h2>
-        <div id="ticketList"></div>
     </div>
 </body>
 </html>
