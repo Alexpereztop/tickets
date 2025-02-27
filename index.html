@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte de Tickets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById("ticketForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById("nombre").value;
+            const email = document.getElementById("email").value;
+            const asunto = document.getElementById("asunto").value;
+            const descripcion = document.getElementById("descripcion").value;
+            const fecha = new Date().toISOString();
+            const estado = "Abierto";
+
+            await addDoc(collection(db, "tickets"), {
+                nombre, email, asunto, descripcion, fecha, estado
+            });
+
+            alert("Ticket creado con éxito, te contactaremos pronto.");
+            document.getElementById("ticketForm").reset();
+            cargarTickets();
+        });
+
+        async function cargarTickets() {
+            const lista = document.getElementById("ticketList");
+            lista.innerHTML = "";
+            const querySnapshot = await getDocs(collection(db, "tickets"));
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                lista.innerHTML += `
+                    <div class='p-4 bg-white shadow rounded-md mb-2'>
+                        <p><strong>${data.asunto}</strong></p>
+                        <p>${data.descripcion}</p>
+                        <p><small>Estado: <span class='estado' data-id='${doc.id}'>${data.estado}</span></small></p>
+                        <select class='estadoSelector' data-id='${doc.id}'>
+                            <option value='Abierto'>Abierto</option>
+                            <option value='En progreso'>En progreso</option>
+                            <option value='Cerrado'>Cerrado</option>
+                        </select>
+                    </div>`;
+            });
+        }
+
+        document.addEventListener("change", async (e) => {
+            if (e.target.classList.contains("estadoSelector")) {
+                const id = e.target.getAttribute("data-id");
+                const nuevoEstado = e.target.value;
+                await updateDoc(doc(db, "tickets", id), { estado: nuevoEstado });
+                alert("Estado actualizado");
+                cargarTickets();
+            }
+        });
+
+        window.onload = cargarTickets;
+    </script>
+</head>
+<body class="bg-gradient-to-r from-gray-800 to-blue-400 flex justify-center items-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 class="text-xl font-bold mb-4">Crear un Ticket</h2>
+        <form id="ticketForm">
+            <input id="nombre" type="text" placeholder="Nombre" required class="w-full p-2 mb-2 border rounded">
+            <input id="email" type="email" placeholder="Email" required class="w-full p-2 mb-2 border rounded">
+            <input id="asunto" type="text" placeholder="Asunto" required class="w-full p-2 mb-2 border rounded">
+            <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-2 border rounded"></textarea>
+            <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Enviar</button>
+        </form>
+    </div>
+    <div class="mt-6 w-96">
+        <h2 class="text-xl font-bold mb-4">Historial de Tickets</h2>
+        <div id="ticketList"></div>
+    </div>
+</body>
+</html>
