@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Gestión de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
@@ -65,33 +66,19 @@
                 const querySnapshot = await getDocs(collection(db, "tickets"));
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
+                    if (data.archivado) return;
+                    const prioridadColor = data.prioridad === 'Alta' ? 'text-red-500' : data.prioridad === 'Media' ? 'text-yellow-500' : 'text-green-500';
                     ticketsContainer.innerHTML += `
                         <div class='p-4 bg-white shadow rounded-md mb-2'>
-                            <p><strong>${data.asunto}</strong></p>
+                            <p><strong><i class="fas fa-ticket-alt"></i> ${data.asunto}</strong></p>
                             <p>${data.descripcion}</p>
-                            <p><small>Estado: ${data.estado}</small></p>
-                            <label>Prioridad:</label>
-                            <select class='prioridadSelector' data-id='${doc.id}'>
-                                <option value='Baja'>Baja</option>
-                                <option value='Media'>Media</option>
-                                <option value='Alta'>Alta</option>
-                            </select>
-                            <label>Asignar a:</label>
-                            <input type='text' class='asignarInput' data-id='${doc.id}' placeholder='Usuario'>
-                            <button class='archivarBtn bg-gray-400 p-1 rounded' data-id='${doc.id}'>Archivar</button>
-                            <button class='desarchivarBtn bg-green-400 p-1 rounded hidden' data-id='${doc.id}'>Desarchivar</button>
+                            <p class='${prioridadColor}'><i class="fas fa-exclamation-circle"></i> Prioridad: ${data.prioridad}</p>
+                            <label>Asignar a: <i class="fas fa-user"></i></label>
+                            <input type='text' class='asignarInput border p-1 rounded w-full' data-id='${doc.id}' placeholder='Usuario'>
+                            <button class='archivarBtn bg-gray-400 p-1 rounded' data-id='${doc.id}'><i class="fas fa-archive"></i> Archivar</button>
                         </div>`;
                 });
             }
-
-            document.addEventListener("change", async (e) => {
-                if (e.target.classList.contains("prioridadSelector")) {
-                    const id = e.target.getAttribute("data-id");
-                    const nuevaPrioridad = e.target.value;
-                    await updateDoc(doc(db, "tickets", id), { prioridad: nuevaPrioridad });
-                    alert("Prioridad actualizada");
-                }
-            });
 
             document.addEventListener("input", async (e) => {
                 if (e.target.classList.contains("asignarInput")) {
@@ -108,29 +95,23 @@
                     alert("Ticket archivado");
                     cargarTickets();
                 }
-                if (e.target.classList.contains("desarchivarBtn")) {
-                    const id = e.target.getAttribute("data-id");
-                    await updateDoc(doc(db, "tickets", id), { archivado: false });
-                    alert("Ticket desarchivado");
-                    cargarTickets();
-                }
             });
         });
     </script>
 </head>
 <body class="bg-gray-100 flex flex-col items-center min-h-screen">
     <div id="authSection" class="bg-white p-6 rounded-lg shadow-lg w-96 mt-6">
-        <h2 class="text-xl font-bold mb-4 text-center">Acceso Administrador</h2>
+        <h2 class="text-xl font-bold mb-4 text-center"><i class="fas fa-user-lock"></i> Acceso Administrador</h2>
         <form id="loginForm">
             <input id="email" type="email" placeholder="Correo" required class="w-full p-2 mb-2 border rounded">
             <input id="password" type="password" placeholder="Contraseña" required class="w-full p-2 mb-4 border rounded">
-            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Ingresar</button>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded"><i class="fas fa-sign-in-alt"></i> Ingresar</button>
         </form>
     </div>
 
     <div id="adminSection" class="hidden w-full max-w-4xl mt-6 p-6 bg-white shadow-lg rounded-lg">
-        <h2 class="text-2xl font-bold mb-4">Panel de Administración</h2>
-        <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded mb-4">Cerrar Sesión</button>
+        <h2 class="text-2xl font-bold mb-4"><i class="fas fa-tools"></i> Panel de Administración</h2>
+        <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded mb-4"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
         <div id="ticketsContainer"></div>
     </div>
 </body>
