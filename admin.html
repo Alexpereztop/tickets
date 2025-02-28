@@ -14,6 +14,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
@@ -26,6 +27,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         let ticketsData = [];
 
@@ -36,44 +38,91 @@
             const prioridadFilter = document.getElementById("prioridadFilter");
             const fechaInicioFilter = document.getElementById("fechaInicioFilter");
             const fechaFinFilter = document.getElementById("fechaFinFilter");
+            const loginSection = document.getElementById("loginSection");
+            const logoutButton = document.getElementById("logoutButton");
 
-            // Cargar tickets
-            const querySnapshot = await getDocs(collection(db, "tickets"));
-            const solicitantes = new Set();
-            
-            ticketsData = querySnapshot.docs.map(doc => {
-                const data = doc.data();
-                solicitantes.add(data.nombre);
-                return { id: doc.id, ...data };
+            // Verificar autenticación
+            if (!auth.currentUser) {
+                loginSection.classList.remove("hidden");
+                logoutButton.classList.add("hidden");
+            } else {
+                loginSection.classList.add("hidden");
+                logoutButton.classList.remove("hidden");
+                await cargarTickets();
+            }
+
+            // Login
+            document.getElementById('loginButton').addEventListener('click', async () => {
+                const email = document.getElementById('emailLogin').value;
+                const password = document.getElementById('passwordLogin').value;
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    loginSection.classList.add("hidden");
+                    logoutButton.classList.remove("hidden");
+                    await cargarTickets();
+                } catch (e) {
+                    console.error("Error al iniciar sesión: ", e);
+                    alert("Error al iniciar sesión. Verifica tus credenciales.");
+                }
             });
 
-            // Llenar filtro de solicitantes
-            solicitantes.forEach(solicitante => {
-                solicitanteFilter.innerHTML += `<option value="${solicitante}">${solicitante}</option>`;
+            // Logout
+            logoutButton.addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    loginSection.classList.remove("hidden");
+                    logoutButton.classList.add("hidden");
+                    ticketsTable.innerHTML = "";
+                }).catch((e) => console.error("Error al cerrar sesión: ", e));
             });
 
-            renderTickets(ticketsData);
+            async function cargarTickets() {
+                try {
+                    console.log("Intentando cargar tickets de Firestore...");
+                    const querySnapshot = await getDocs(collection(db, "tickets"));
+                    console.log("Datos recuperados:", querySnapshot.docs);
+
+                    const solicitantes = new Set();
+                    ticketsData = querySnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        solicitantes.add(data.nombre);
+                        return { id: doc.id, ...data };
+                    });
+
+                    console.log("Solicitantes encontrados:", Array.from(solicitantes));
+
+                    // Llenar filtro de solicitantes
+                    solicitanteFilter.innerHTML = '<option value="">Todos los Solicitantes</option>';
+                    solicitantes.forEach(solicitante => {
+                        solicitanteFilter.innerHTML += `<option value="${solicitante}">${solicitante}</option>`;
+                    });
+
+                    renderTickets(ticketsData);
+                } catch (e) {
+                    console.error("Error al cargar tickets: ", e);
+                    alert("No se pudieron cargar los tickets. Revisa la consola para más detalles.");
+                }
+            }
 
             // Event listeners para filtros
             [solicitanteFilter, estadoFilter, prioridadFilter, fechaInicioFilter, fechaFinFilter].forEach(filter => {
                 filter.addEventListener("change", filterTickets);
             });
 
-            // Función para renderizar tickets
             function renderTickets(tickets) {
                 ticketsTable.innerHTML = "";
                 tickets.forEach(doc => {
                     const data = doc;
-                    const row = `<tr class="border">
-                        <td class="border p-2">${doc.id}</td>
-                        <td class="border p-2">${data.nombre} (${data.email})</td>
-                        <td class="border p-2">${data.asunto}</td>
-                        <td class="border p-2">${data.descripcion}</td>
+                    ticketsTable.innerHTML += `<tr class="border">
+                        <td class="border p-2">${doc.id || 'Sin ID'}</td>
+                        <td class="border p-2">${(data.nombre || 'Sin nombre')} (${data.email || 'Sin email'})</td>
+                        <td class="border p-2">${data.asunto || 'Sin asunto'}</td>
+                        <td class="border p-2">${data.descripcion || 'Sin descripción'}</td>
                         <td class="border p-2">
-                            <select class="estadoSelect border p-1 rounded estado-${data.estado.toLowerCase().replace(" ", "-")}" data-id="${doc.id}">
-                                <option value="Abierto" ${data.estado === "Abierto" ? "selected" : ""}>Abierto</option>
-                                <option value="En proceso" ${data.estado === "En proceso" ? "selected" : ""}>En proceso</option>
-                                <option value="Cerrado" ${data.estado === "Cerrado" ? "selected" : ""}>Cerrado</option>
+                            <select class="estadoSelect border p-1 rounded estado-${(data.estado || 'Abierto').toLowerCase().replace(" ", "-")}" data-id="${doc.id}">
+                                <option value="Abierto" ${(data.estado || 'Abierto') === "Abierto" ? "selected" : ""}>Abierto</option>
+                                <option value="En proceso" ${(data.estado || 'Abierto') === "En proceso" ? "selected" : ""}>En proceso</option>
+                                <option value="Cerrado" ${(data.estado || 'Abierto') === "Cerrado" ? "selected" : ""}>Cerrado</option>
                             </select>
                         </td>
                         <td class="border p-2">
@@ -83,15 +132,13 @@
                                 <option value="Baja" ${data.prioridad === "Baja" ? "selected" : ""}>Baja</option>
                             </select>
                         </td>
-                        <td class="border p-2">${data.fecha}</td>
+                        <td class="border p-2">${data.fecha || 'Sin fecha'}</td>
                     </tr>`;
-                    ticketsTable.innerHTML += row;
                 });
 
                 addEventListeners();
             }
 
-            // Función para filtrar tickets
             function filterTickets() {
                 let filteredTickets = [...ticketsData];
                 
@@ -110,7 +157,6 @@
                 renderTickets(filteredTickets);
             }
 
-            // Añadir event listeners a los selects
             function addEventListeners() {
                 document.querySelectorAll(".estadoSelect").forEach(select => {
                     select.addEventListener("change", async (event) => {
@@ -119,7 +165,7 @@
                         const ticketRef = doc(db, "tickets", ticketId);
                         await updateDoc(ticketRef, { estado: newEstado });
                         alert("Estado actualizado correctamente");
-                        filterTickets(); // Refrescar tabla
+                        filterTickets();
                     });
                 });
 
@@ -130,7 +176,7 @@
                         const ticketRef = doc(db, "tickets", ticketId);
                         await updateDoc(ticketRef, { prioridad: newPrioridad });
                         alert("Prioridad actualizada correctamente");
-                        filterTickets(); // Refrescar tabla
+                        filterTickets();
                     });
                 });
             }
@@ -154,7 +200,12 @@
         <div class="flex-1 p-10">
             <header class="flex justify-between items-center">
                 <h2 class="text-3xl font-bold">Panel de Administración</h2>
-                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded">Cerrar Sesión</button>
+                <div id="loginSection" class="space-y-4">
+                    <input type="email" id="emailLogin" placeholder="Email" class="border p-2 rounded">
+                    <input type="password" id="passwordLogin" placeholder="Contraseña" class="border p-2 rounded">
+                    <button id="loginButton" class="bg-blue-500 text-white px-4 py-2 rounded">Iniciar Sesión</button>
+                </div>
+                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hidden">Cerrar Sesión</button>
             </header>
             
             <!-- Filtros -->
