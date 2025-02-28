@@ -69,7 +69,9 @@
     </footer>
 
     <script type="module">
-        import { getDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        
+        const db = getFirestore();
         
         document.getElementById("trackForm").addEventListener("submit", async function(event) {
             event.preventDefault();
