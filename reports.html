@@ -25,11 +25,16 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             const reportDiv = document.getElementById("reportDiv");
-            const ctxEstado = document.getElementById('ticketsChartEstado').getContext('2d');
-            const ctxPrioridad = document.getElementById('ticketsChartPrioridad').getContext('2d');
+            if (!reportDiv) {
+                console.error("reportDiv no encontrado en el HTML");
+                return;
+            }
 
             try {
+                console.log("Intentando cargar datos de Firestore...");
                 const querySnapshot = await getDocs(collection(db, "tickets"));
+                console.log("Datos recuperados:", querySnapshot.docs);
+
                 let totalTickets = 0, abiertos = 0, enProceso = 0, cerrados = 0;
                 let alta = 0, media = 0, baja = 0;
 
@@ -45,12 +50,50 @@
                     else if (ticket.prioridad === "Baja") baja++;
                 });
 
+                // Generar el HTML dinámico
+                reportDiv.innerHTML = `
+                    <h3 class="text-2xl font-bold text-gray-800 text-center mb-6">Dashboard de Reportes de Tickets</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Resumen de Tickets</h4>
+                            <p class="text-gray-600">Total de Tickets: ${totalTickets}</p>
+                            <p class="text-gray-600">Abiertos: ${abiertos}</p>
+                            <p class="text-gray-600">En Proceso: ${enProceso}</p>
+                            <p class="text-gray-600">Cerrados: ${cerrados}</p>
+                            <p class="text-gray-600">Prioridad Alta: ${alta}</p>
+                            <p class="text-gray-600">Prioridad Media: ${media}</p>
+                            <p class="text-gray-600">Prioridad Baja: ${baja}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Tickets por Estado</h4>
+                            <div class="h-64">
+                                <canvas id="ticketsChartEstado"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Tickets por Prioridad</h4>
+                            <div class="h-64">
+                                <canvas id="ticketsChartPrioridad"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Verificar y crear gráficos después de renderizar el HTML
+                const ctxEstado = document.getElementById('ticketsChartEstado')?.getContext('2d');
+                const ctxPrioridad = document.getElementById('ticketsChartPrioridad')?.getContext('2d');
+
+                if (!ctxEstado || !ctxPrioridad) {
+                    console.error("No se encontraron los elementos canvas después de renderizar. Verifica el HTML dinámico.");
+                    return;
+                }
+
                 // Datos para gráficos basados en los tickets actuales
                 const estadosLabels = ['Abierto', 'En proceso', 'Cerrado'];
-                const estadosData = [abiertos, enProceso, cerrados]; // [1, 1, 0] según los datos
+                const estadosData = [abiertos, enProceso, cerrados]; // [1, 1, 0] según tus datos
 
                 const prioridadesLabels = ['Alta', 'Media', 'Baja'];
-                const prioridadesData = [alta, media, baja]; // [2, 0, 0] según los datos
+                const prioridadesData = [alta, media, baja]; // [2, 0, 0] según tus datos
 
                 // Crear gráfico de barras para estados
                 new Chart(ctxEstado, {
@@ -129,35 +172,6 @@
                         maintainAspectRatio: false
                     }
                 });
-
-                // Mostrar resumen numérico y gráficos
-                reportDiv.innerHTML = `
-                    <h3 class="text-2xl font-bold text-gray-800 text-center mb-6">Dashboard de Reportes de Tickets</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-4 rounded-lg shadow-md">
-                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Resumen de Tickets</h4>
-                            <p class="text-gray-600">Total de Tickets: ${totalTickets}</p>
-                            <p class="text-gray-600">Abiertos: ${abiertos}</p>
-                            <p class="text-gray-600">En Proceso: ${enProceso}</p>
-                            <p class="text-gray-600">Cerrados: ${cerrados}</p>
-                            <p class="text-gray-600">Prioridad Alta: ${alta}</p>
-                            <p class="text-gray-600">Prioridad Media: ${media}</p>
-                            <p class="text-gray-600">Prioridad Baja: ${baja}</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-md">
-                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Tickets por Estado</h4>
-                            <div class="h-64">
-                                <canvas id="ticketsChartEstado"></canvas>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-md">
-                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Tickets por Prioridad</h4>
-                            <div class="h-64">
-                                <canvas id="ticketsChartPrioridad"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                `;
             } catch (e) {
                 console.error("Error al cargar reportes: ", e);
                 reportDiv.innerHTML = '<p class="text-red-600 text-center">Error al cargar reportes. Revisa la consola.</p>';
