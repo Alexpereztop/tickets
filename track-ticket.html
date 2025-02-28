@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -19,8 +20,87 @@
             appId: "1:857025500576:web:1140e9cd603125f368c0c5"
         };
 
+        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const trackForm = document.getElementById("trackForm");
+            const logoutButton = document.getElementById("logoutButton");
+            const ticketResult = document.getElementById("ticketResult");
+            const ticketIdInput = document.getElementById("ticketId");
+
+            // Verificar estado de autenticación
+            onAuthStateChanged(auth, (user) => {
+                if (!user) {
+                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
+                    window.location.href = "auth.html";
+                } else {
+                    console.log("Usuario autenticado:", user.email);
+                    logoutButton.style.display = "inline-block"; // Mostrar botón de cerrar sesión
+                }
+            });
+
+            // Manejar búsqueda de ticket
+            trackForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const ticketId = ticketIdInput.value.trim();
+
+                if (!ticketId) {
+                    alert("Por favor, ingrese un ID de ticket válido");
+                    return;
+                }
+
+                try {
+                    const ticketRef = doc(db, "tickets", ticketId);
+                    const ticketSnap = await getDoc(ticketRef);
+
+                    if (ticketSnap.exists()) {
+                        const data = ticketSnap.data();
+                        document.getElementById("ticketAsunto").innerText = data.asunto;
+                        document.getElementById("ticketDescripcion").innerText = data.descripcion;
+                        document.getElementById("ticketEstado").innerText = data.estado;
+                        document.getElementById("ticketFecha").innerText = new Date(data.fecha).toLocaleString();
+                        ticketResult.classList.remove("hidden");
+                        ticketIdInput.value = ""; // Limpiar el campo tras éxito
+                    } else {
+                        alert("No se encontró un ticket con ese ID");
+                        ticketResult.classList.add("hidden");
+                    }
+                } catch (error) {
+                    console.error("Error al buscar ticket:", error.code, error.message);
+                    alert("Error: " + getFriendlyErrorMessage(error.code));
+                    ticketResult.classList.add("hidden");
+                }
+            });
+
+            // Manejar cierre de sesión
+            logoutButton.addEventListener("click", () => {
+                signOut(auth)
+                    .then(() => {
+                        console.log("Sesión cerrada");
+                        alert("Sesión cerrada exitosamente");
+                        window.location.href = "auth.html";
+                    })
+                    .catch((error) => {
+                        console.error("Error al cerrar sesión:", error.message);
+                        alert("Error al cerrar sesión: " + error.message);
+                    });
+            });
+
+            // Función para mensajes de error más amigables
+            function getFriendlyErrorMessage(errorCode) {
+                switch (errorCode) {
+                    case "permission-denied":
+                        return "No tienes permiso para consultar tickets. Inicia sesión.";
+                    case "auth/operation-not-allowed":
+                        return "Operación no permitida. Contacta al administrador.";
+                    default:
+                        return "Ocurrió un error al consultar el ticket. Intenta de nuevo.";
+                }
+            }
+        });
     </script>
 </head>
 <body class="bg-gray-100">
@@ -40,7 +120,7 @@
         <div class="flex-1 p-10">
             <header class="flex justify-between items-center">
                 <h2 class="text-3xl font-bold">Seguimiento de Ticket</h2>
-                <a href="auth.html" class="bg-blue-600 text-white px-4 py-2 rounded">Iniciar Sesión</a>
+                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
             </header>
             
             <!-- Formulario de Búsqueda de Ticket -->
@@ -48,7 +128,7 @@
                 <h3 class="text-xl font-semibold mb-4">Consulta el estado de tu ticket</h3>
                 <form id="trackForm">
                     <input id="ticketId" type="text" placeholder="Ingrese su ID de Ticket" required class="w-full p-2 mb-3 border rounded">
-                    <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded">Consultar</button>
+                    <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Consultar</button>
                 </form>
             </section>
             
@@ -65,41 +145,7 @@
     
     <!-- Footer -->
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
+        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
-
-    <script type="module">
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        
-        const db = getFirestore();
-        
-        document.getElementById("trackForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const ticketId = document.getElementById("ticketId").value.trim();
-            if (!ticketId) {
-                alert("Por favor, ingrese un ID de ticket válido");
-                return;
-            }
-            
-            try {
-                const ticketRef = doc(db, "tickets", ticketId);
-                const ticketSnap = await getDoc(ticketRef);
-                
-                if (ticketSnap.exists()) {
-                    const data = ticketSnap.data();
-                    document.getElementById("ticketAsunto").innerText = data.asunto;
-                    document.getElementById("ticketDescripcion").innerText = data.descripcion;
-                    document.getElementById("ticketEstado").innerText = data.estado;
-                    document.getElementById("ticketFecha").innerText = data.fecha;
-                    document.getElementById("ticketResult").classList.remove("hidden");
-                } else {
-                    alert("No se encontró el ticket con ese ID");
-                }
-            } catch (error) {
-                console.error("Error al buscar ticket", error);
-                alert("Hubo un error al consultar el ticket");
-            }
-        });
-    </script>
 </body>
 </html>
