@@ -26,7 +26,6 @@
         let usuariosDisponibles = [];
 
         document.addEventListener("DOMContentLoaded", async () => {
-            const loginForm = document.getElementById("loginForm");
             const logoutBtn = document.getElementById("logoutBtn");
             const ticketsContainer = document.getElementById("ticketsContainer");
             const userNameDisplay = document.getElementById("userName");
@@ -35,21 +34,14 @@
 
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
-                    document.getElementById("authSection").classList.add("hidden");
-                    document.getElementById("adminSection").classList.remove("hidden");
                     userNameDisplay.textContent = user.email;
                     await cargarUsuarios();
                     cargarTickets(false);
-                } else {
-                    document.getElementById("authSection").classList.remove("hidden");
-                    document.getElementById("adminSection").classList.add("hidden");
                 }
             });
 
             logoutBtn.addEventListener("click", () => {
-                signOut(auth)
-                    .then(() => alert("Sesión cerrada"))
-                    .catch(error => alert("Error al cerrar sesión: " + error.message));
+                signOut(auth).then(() => alert("Sesión cerrada"));
             });
 
             async function cargarUsuarios() {
@@ -69,12 +61,26 @@
                         <div class='p-6 bg-white shadow-lg rounded-lg mb-4'>
                             <h3 class='text-lg font-bold mb-2'><i class="fas fa-ticket-alt"></i> ${data.asunto}</h3>
                             <p>${data.descripcion}</p>
-                            <p class='${prioridadColor} mt-2'><i class="fas fa-exclamation-circle"></i> Prioridad: ${data.prioridad || 'Sin asignar'}</p>
-                            <label class='mt-2'>Asignar a: <i class="fas fa-user"></i></label>
-                            <select class='asignarSelect border p-2 rounded w-full' data-id='${doc.id}'>
-                                <option value=''>Seleccionar usuario</option>
-                                ${opcionesUsuarios}
-                            </select>
+                            <p class='${prioridadColor} mt-2'><i class="fas fa-exclamation-circle"></i> Prioridad: 
+                                <select class='prioridadSelect border p-2 rounded w-full' data-id='${doc.id}'>
+                                    <option value='Alta' ${data.prioridad === 'Alta' ? 'selected' : ''}>Alta</option>
+                                    <option value='Media' ${data.prioridad === 'Media' ? 'selected' : ''}>Media</option>
+                                    <option value='Baja' ${data.prioridad === 'Baja' ? 'selected' : ''}>Baja</option>
+                                </select>
+                            </p>
+                            <p class='mt-2'>Estado: 
+                                <select class='estadoSelect border p-2 rounded w-full' data-id='${doc.id}'>
+                                    <option value='Abierto' ${data.estado === 'Abierto' ? 'selected' : ''}>Abierto</option>
+                                    <option value='En progreso' ${data.estado === 'En progreso' ? 'selected' : ''}>En progreso</option>
+                                    <option value='Cerrado' ${data.estado === 'Cerrado' ? 'selected' : ''}>Cerrado</option>
+                                </select>
+                            </p>
+                            <p class='mt-2'>Asignar a: 
+                                <select class='asignarSelect border p-2 rounded w-full' data-id='${doc.id}'>
+                                    <option value=''>Seleccionar usuario</option>
+                                    ${opcionesUsuarios}
+                                </select>
+                            </p>
                             <button class='${archivados ? "desarchivarBtn bg-green-500" : "archivarBtn bg-gray-400"} p-2 rounded mt-3 w-full' data-id='${doc.id}'>
                                 <i class="fas ${archivados ? "fa-upload" : "fa-archive"}"></i> ${archivados ? "Desarchivar" : "Archivar"}
                             </button>
@@ -83,24 +89,23 @@
             }
 
             document.addEventListener("change", async (e) => {
+                const id = e.target.getAttribute("data-id");
                 if (e.target.classList.contains("asignarSelect")) {
-                    const id = e.target.getAttribute("data-id");
-                    const usuario = e.target.value;
-                    await updateDoc(doc(db, "tickets", id), { asignadoA: usuario });
+                    await updateDoc(doc(db, "tickets", id), { asignadoA: e.target.value });
+                } else if (e.target.classList.contains("prioridadSelect")) {
+                    await updateDoc(doc(db, "tickets", id), { prioridad: e.target.value });
+                } else if (e.target.classList.contains("estadoSelect")) {
+                    await updateDoc(doc(db, "tickets", id), { estado: e.target.value });
                 }
             });
 
             document.addEventListener("click", async (e) => {
+                const id = e.target.getAttribute("data-id");
                 if (e.target.classList.contains("archivarBtn")) {
-                    const id = e.target.getAttribute("data-id");
                     await updateDoc(doc(db, "tickets", id), { archivado: true });
-                    alert("Ticket archivado");
                     cargarTickets(false);
-                }
-                if (e.target.classList.contains("desarchivarBtn")) {
-                    const id = e.target.getAttribute("data-id");
+                } else if (e.target.classList.contains("desarchivarBtn")) {
                     await updateDoc(doc(db, "tickets", id), { archivado: false });
-                    alert("Ticket desarchivado");
                     cargarTickets(true);
                 }
             });
@@ -120,7 +125,7 @@
         <span id="userName"></span>
     </header>
     <div id="adminSection" class="w-full max-w-4xl mt-6 p-6 bg-white shadow-lg rounded-lg mx-auto">
-        <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded mb-4 w-full"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+        <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded mb-4 w-full">Cerrar Sesión</button>
         <div id="ticketsContainer"></div>
     </div>
 </body>
