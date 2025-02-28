@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Ticket - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
@@ -20,130 +18,49 @@
             appId: "1:857025500576:web:1140e9cd603125f368c0c5"
         };
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
         document.addEventListener("DOMContentLoaded", () => {
-            const ticketForm = document.getElementById("ticketForm");
-            const logoutButton = document.getElementById("logoutButton");
-            const ticketIdMessage = document.getElementById("ticketIdMessage");
-            const generatedTicketId = document.getElementById("generatedTicketId");
+            const form = document.getElementById("ticketForm");
 
-            // Verificar estado de autenticación
-            onAuthStateChanged(auth, (user) => {
-                if (!user) {
-                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
-                    window.location.href = "auth.html";
-                } else {
-                    console.log("Usuario autenticado:", user.email);
-                    logoutButton.style.display = "inline-block"; // Mostrar botón de cerrar sesión
-                }
-            });
-
-            // Manejar creación de ticket
-            ticketForm.addEventListener("submit", async (event) => {
-                event.preventDefault();
-                
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
                 const nombre = document.getElementById("nombre").value;
                 const email = document.getElementById("email").value;
                 const asunto = document.getElementById("asunto").value;
                 const descripcion = document.getElementById("descripcion").value;
-                const prioridad = document.getElementById("prioridad").value;
-                const fecha = new Date().toISOString();
 
                 try {
-                    const docRef = await addDoc(collection(db, "tickets"), {
-                        nombre,
-                        email,
-                        asunto,
-                        descripcion,
-                        prioridad,
+                    await addDoc(collection(db, "tickets"), {
+                        nombre: nombre,
+                        email: email,
+                        asunto: asunto,
+                        descripcion: descripcion,
                         estado: "Abierto",
-                        fecha
+                        prioridad: "Alta",
+                        fecha: new Date().toISOString().split('T')[0] // Fecha actual (YYYY-MM-DD)
                     });
-                    generatedTicketId.innerText = docRef.id;
-                    ticketIdMessage.classList.remove("hidden");
-                    alert("Ticket creado con éxito. Guarda tu ID: " + docRef.id);
-                    ticketForm.reset(); // Limpiar formulario tras éxito
-                } catch (error) {
-                    console.error("Error al crear ticket:", error.code, error.message);
-                    alert("Error al crear ticket: " + getFriendlyErrorMessage(error.code));
+                    alert("Ticket creado con éxito, te contactaremos pronto");
+                    form.reset();
+                } catch (e) {
+                    console.error("Error al crear ticket: ", e);
+                    alert("Error al crear el ticket. Revisa la consola para más detalles.");
                 }
             });
-
-            // Manejar cierre de sesión
-            logoutButton.addEventListener("click", () => {
-                signOut(auth)
-                    .then(() => {
-                        console.log("Sesión cerrada");
-                        alert("Sesión cerrada exitosamente");
-                        window.location.href = "auth.html";
-                    })
-                    .catch((error) => {
-                        console.error("Error al cerrar sesión:", error.message);
-                        alert("Error al cerrar sesión: " + error.message);
-                    });
-            });
-
-            // Función para mensajes de error más amigables
-            function getFriendlyErrorMessage(errorCode) {
-                switch (errorCode) {
-                    case "auth/operation-not-allowed":
-                        return "Operación no permitida. Contacta al administrador.";
-                    case "permission-denied":
-                        return "No tienes permiso para crear tickets. Inicia sesión.";
-                    default:
-                        return "Ocurrió un error. Por favor, intenta de nuevo.";
-                }
-            }
         });
     </script>
 </head>
-<body class="bg-gray-100">
-    
-    <!-- Menú Lateral -->
-    <div class="flex h-screen">
-        <nav class="w-64 bg-blue-600 text-white p-5 flex flex-col">
-            <h1 class="text-2xl font-bold mb-6"><i class="fas fa-ticket-alt"></i> Ticket Manager</h1>
-            <a href="index.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🏠 Inicio</a>
-            <a href="create-ticket.html" class="mb-3 bg-blue-500 p-2 rounded">🎫 Crear Ticket</a>
-            <a href="track-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🔍 Seguimiento</a>
-            <a href="admin.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📊 Dashboard</a>
-            <a href="reports.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📈 Reportes</a>
-        </nav>
-        
-        <!-- Contenido Principal -->
-        <div class="flex-1 p-10">
-            <header class="flex justify-between items-center">
-                <h2 class="text-3xl font-bold">Crear un Ticket</h2>
-                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
-            </header>
-            
-            <!-- Formulario de Creación de Ticket -->
-            <section class="mt-10 bg-white p-6 shadow-lg rounded-lg max-w-lg mx-auto">
-                <h3 class="text-xl font-semibold mb-4">Por favor, completa la información</h3>
-                <form id="ticketForm">
-                    <input id="nombre" type="text" placeholder="Nombre" required class="w-full p-2 mb-3 border rounded">
-                    <input id="email" type="email" placeholder="Email" required class="w-full p-2 mb-3 border rounded">
-                    <input id="asunto" type="text" placeholder="Asunto" required class="w-full p-2 mb-3 border rounded">
-                    <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-3 border rounded h-24"></textarea>
-                    <select id="prioridad" class="w-full p-2 mb-3 border rounded">
-                        <option value="Baja">Prioridad Baja</option>
-                        <option value="Media">Prioridad Media</option>
-                        <option value="Alta">Prioridad Alta</option>
-                    </select>
-                    <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition">Enviar Ticket</button>
-                </form>
-                <p id="ticketIdMessage" class="mt-4 text-green-600 text-sm hidden">Tu ID de Ticket es: <span id="generatedTicketId"></span></p>
-            </section>
-        </div>
+<body class="bg-gradient-to-b from-gray-800 to-blue-400 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Crear Ticket de Soporte</h1>
+        <form id="ticketForm" class="space-y-4">
+            <input type="text" id="nombre" placeholder="Tu nombre" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="email" id="email" placeholder="Tu email" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="asunto" placeholder="Asunto del ticket" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none"></textarea>
+            <button type="submit" class="w-full p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Enviar Ticket</button>
+        </form>
     </div>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
-    </footer>
 </body>
 </html>
