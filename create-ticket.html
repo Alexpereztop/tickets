@@ -89,6 +89,7 @@
                 document.getElementById("ticketIdMessage").classList.remove("hidden");
                 alert("Ticket creado con éxito. Guarda tu ID: " + docRef.id);
             } catch (error) {
+                console.error("Error al crear ticket", error);
                 alert("Error al crear ticket: " + error.message);
             }
         });
