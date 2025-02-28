@@ -25,6 +25,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
+                    console.log("Usuario autenticado", user.email);
                     window.location.href = "admin.html";
                 }
             });
@@ -48,12 +49,15 @@
             event.preventDefault();
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
+            
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
+                    console.log("Inicio de sesión exitoso", userCredential.user);
                     alert("Inicio de sesión exitoso");
                     window.location.href = "admin.html";
                 })
                 .catch((error) => {
+                    console.error("Error de inicio de sesión", error);
                     alert("Error: " + error.message);
                 });
         });
