@@ -3,108 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio - Sistema de Tickets</title>
+    <title>Sistema de Tickets - Inicio</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
-            authDomain: "tickets-5a8b7.firebaseapp.com",
-            projectId: "tickets-5a8b7",
-            storageBucket: "tickets-5a8b7.firebasestorage.app",
-            messagingSenderId: "857025500576",
-            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
-        };
-
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const logoutButton = document.getElementById("logoutButton");
-
-            // Verificar estado de autenticación
-            onAuthStateChanged(auth, (user) => {
-                if (!user) {
-                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
-                    window.location.href = "auth.html";
-                } else {
-                    console.log("Usuario autenticado:", user.email);
-                    // Mostrar botón de cerrar sesión si está autenticado
-                    logoutButton.style.display = "inline-block";
-                }
-            });
-
-            // Manejar cierre de sesión
-            logoutButton.addEventListener("click", () => {
-                signOut(auth)
-                    .then(() => {
-                        console.log("Sesión cerrada");
-                        alert("Sesión cerrada exitosamente");
-                        window.location.href = "auth.html";
-                    })
-                    .catch((error) => {
-                        console.error("Error al cerrar sesión:", error.message);
-                        alert("Error al cerrar sesión: " + error.message);
-                    });
-            });
-        });
-    </script>
 </head>
-<body class="bg-gray-100">
-    
-    <!-- Menú Lateral -->
-    <div class="flex h-screen">
-        <nav class="w-64 bg-blue-600 text-white p-5 flex flex-col">
-            <h1 class="text-2xl font-bold mb-6"><i class="fas fa-ticket-alt"></i> Ticket Manager</h1>
-            <a href="index.html" class="mb-3 bg-blue-500 p-2 rounded">🏠 Inicio</a>
-            <a href="create-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🎫 Crear Ticket</a>
-            <a href="track-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🔍 Seguimiento</a>
-            <a href="admin.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📊 Dashboard</a>
-            <a href="reports.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📈 Reportes</a>
-        </nav>
-        
-        <!-- Contenido Principal -->
-        <div class="flex-1 p-10">
-            <header class="flex justify-between items-center">
-                <h2 class="text-3xl font-bold">Bienvenido al Sistema de Tickets</h2>
-                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
-            </header>
-            
-            <!-- Hero Section -->
-            <section class="mt-10 text-center">
-                <h1 class="text-4xl font-bold">Gestión de Soporte Simplificada</h1>
-                <p class="text-gray-600 mt-4">Administra tus tickets de manera rápida y eficiente.</p>
-                <a href="create-ticket.html" class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded text-lg hover:bg-green-600 transition">Crear un Ticket</a>
-            </section>
-            
-            <!-- Funcionalidades -->
-            <section class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                <div class="bg-white shadow-lg p-6 rounded-lg">
-                    <i class="fas fa-clock text-blue-600 text-3xl"></i>
-                    <h3 class="text-xl font-semibold mt-4">Soporte 24/7</h3>
-                    <p class="text-gray-600">Resolvemos tus problemas en cualquier momento.</p>
-                </div>
-                <div class="bg-white shadow-lg p-6 rounded-lg">
-                    <i class="fas fa-user-shield text-green-600 text-3xl"></i>
-                    <h3 class="text-xl font-semibold mt-4">Seguridad</h3>
-                    <p class="text-gray-600">Tus datos están protegidos con las mejores prácticas.</p>
-                </div>
-                <div class="bg-white shadow-lg p-6 rounded-lg">
-                    <i class="fas fa-chart-line text-yellow-600 text-3xl"></i>
-                    <h3 class="text-xl font-semibold mt-4">Reportes y Análisis</h3>
-                    <p class="text-gray-600">Consulta el estado de tus tickets en tiempo real.</p>
-                </div>
-            </section>
-        </div>
+<body class="bg-gradient-to-b from-gray-800 to-blue-400 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Sistema de Gestión de Tickets</h1>
+        <p class="text-gray-600 mb-6">¡Bienvenido! Crea un ticket de soporte o rastrea tus tickets existentes.</p>
+        <a href="create-ticket.html" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors mr-4">Crear Ticket</a>
+        <a href="track-ticket.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Rastrea Ticket</a>
     </div>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
-    </footer>
 </body>
 </html>
