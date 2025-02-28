@@ -38,33 +38,93 @@
     
     <!-- Footer -->
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
+        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
 
-    <script>
-        document.getElementById("logoutButton").addEventListener("click", function() {
-            alert("Sesión cerrada");
-            window.location.href = "auth.html";
-        });
+    <script type="module">
+        // Importar funciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-        // Configuración del gráfico de reportes
-        const ctx = document.getElementById('ticketChart').getContext('2d');
-        const ticketChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Abiertos', 'En Proceso', 'Cerrados'],
-                datasets: [{
-                    label: 'Número de Tickets',
-                    data: [12, 8, 20], // Valores de ejemplo, reemplazar con datos reales
-                    backgroundColor: ['#f87171', '#facc15', '#4ade80'],
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
-                }
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Función para cargar y mostrar los datos en el gráfico
+        async function loadChartData() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "tickets"));
+                let abiertos = 0;
+                let enProceso = 0;
+                let cerrados = 0;
+
+                // Contar tickets por estado
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    switch (data.estado) {
+                        case "Abierto":
+                            abiertos++;
+                            break;
+                        case "En proceso":
+                            enProceso++;
+                            break;
+                        case "Cerrado":
+                            cerrados++;
+                            break;
+                    }
+                });
+
+                // Configuración del gráfico con datos reales
+                const ctx = document.getElementById('ticketChart').getContext('2d');
+                const ticketChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Abiertos', 'En Proceso', 'Cerrados'],
+                        datasets: [{
+                            label: 'Número de Tickets',
+                            data: [abiertos, enProceso, cerrados],
+                            backgroundColor: ['#f87171', '#facc15', '#4ade80'],
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1 // Asegura que los valores sean enteros
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error al cargar los datos del gráfico:", error);
             }
+        }
+
+        // Cargar datos cuando la página esté lista
+        document.addEventListener("DOMContentLoaded", () => {
+            loadChartData();
+
+            // Evento del botón de cerrar sesión
+            document.getElementById("logoutButton").addEventListener("click", function() {
+                alert("Sesión cerrada");
+                window.location.href = "auth.html";
+            });
         });
     </script>
 </body>
