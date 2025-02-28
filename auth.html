@@ -1,1 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticación - Sistema de Tickets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+    </script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 class="text-2xl font-bold text-center mb-6">Iniciar Sesión</h2>
+        <form id="loginForm">
+            <input id="email" type="email" placeholder="Correo Electrónico" required class="w-full p-2 mb-3 border rounded">
+            <input id="password" type="password" placeholder="Contraseña" required class="w-full p-2 mb-3 border rounded">
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Ingresar</button>
+        </form>
+        <p class="text-center text-sm mt-4">¿No tienes cuenta? <a id="registerLink" href="#" class="text-blue-600">Regístrate</a></p>
+    </div>
+    
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    alert("Inicio de sesión exitoso");
+                    window.location.href = "admin.html";
+                })
+                .catch((error) => {
+                    alert("Error: " + error.message);
+                });
+        });
+    </script>
+</body>
+</html>
