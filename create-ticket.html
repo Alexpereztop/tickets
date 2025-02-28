@@ -6,6 +6,22 @@
     <title>Crear Ticket - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+    </script>
 </head>
 <body class="bg-gray-100">
     
@@ -42,6 +58,7 @@
                     </select>
                     <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Enviar Ticket</button>
                 </form>
+                <p id="ticketIdMessage" class="mt-4 text-green-600 text-sm hidden">Tu ID de Ticket es: <span id="generatedTicketId"></span></p>
             </section>
         </div>
     </div>
@@ -50,5 +67,31 @@
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
         <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
+
+    <script type="module">
+        import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        
+        document.getElementById("ticketForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const nombre = document.getElementById("nombre").value;
+            const email = document.getElementById("email").value;
+            const asunto = document.getElementById("asunto").value;
+            const descripcion = document.getElementById("descripcion").value;
+            const prioridad = document.getElementById("prioridad").value;
+            const fecha = new Date().toISOString();
+
+            try {
+                const docRef = await addDoc(collection(db, "tickets"), {
+                    nombre, email, asunto, descripcion, prioridad, estado: "Abierto", fecha
+                });
+                document.getElementById("generatedTicketId").innerText = docRef.id;
+                document.getElementById("ticketIdMessage").classList.remove("hidden");
+                alert("Ticket creado con éxito. Guarda tu ID: " + docRef.id);
+            } catch (error) {
+                alert("Error al crear ticket: " + error.message);
+            }
+        });
+    </script>
 </body>
 </html>
