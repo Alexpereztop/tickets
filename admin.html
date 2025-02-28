@@ -23,36 +23,27 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        let usuariosDisponibles = [];
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             const loginForm = document.getElementById("loginForm");
             const logoutBtn = document.getElementById("logoutBtn");
             const ticketsContainer = document.getElementById("ticketsContainer");
+            const userNameDisplay = document.getElementById("userName");
+            const archivedTicketsLink = document.getElementById("archivedTicketsLink");
+            const activeTicketsLink = document.getElementById("activeTicketsLink");
 
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     document.getElementById("authSection").classList.add("hidden");
                     document.getElementById("adminSection").classList.remove("hidden");
-                    cargarTickets();
+                    userNameDisplay.textContent = user.email;
+                    await cargarUsuarios();
+                    cargarTickets(false);
                 } else {
                     document.getElementById("authSection").classList.remove("hidden");
                     document.getElementById("adminSection").classList.add("hidden");
                 }
-            });
-
-            loginForm.addEventListener("submit", (e) => {
-                e.preventDefault();
-                const email = document.getElementById("email").value;
-                const password = document.getElementById("password").value;
-
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(() => {
-                        alert("Inicio de sesión exitoso");
-                        loginForm.reset();
-                    })
-                    .catch(error => {
-                        alert("Error: " + error.message);
-                    });
             });
 
             logoutBtn.addEventListener("click", () => {
@@ -61,27 +52,38 @@
                     .catch(error => alert("Error al cerrar sesión: " + error.message));
             });
 
-            async function cargarTickets() {
+            async function cargarUsuarios() {
+                const querySnapshot = await getDocs(collection(db, "usuarios"));
+                usuariosDisponibles = querySnapshot.docs.map(doc => doc.data().email);
+            }
+
+            async function cargarTickets(archivados) {
                 ticketsContainer.innerHTML = "";
                 const querySnapshot = await getDocs(collection(db, "tickets"));
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    if (data.archivado) return;
+                    if (data.archivado !== archivados) return;
                     const prioridadColor = data.prioridad === 'Alta' ? 'text-red-500' : data.prioridad === 'Media' ? 'text-yellow-500' : 'text-green-500';
+                    let opcionesUsuarios = usuariosDisponibles.map(user => `<option value='${user}'>${user}</option>`).join("");
                     ticketsContainer.innerHTML += `
-                        <div class='p-4 bg-white shadow rounded-md mb-2'>
-                            <p><strong><i class="fas fa-ticket-alt"></i> ${data.asunto}</strong></p>
+                        <div class='p-6 bg-white shadow-lg rounded-lg mb-4'>
+                            <h3 class='text-lg font-bold mb-2'><i class="fas fa-ticket-alt"></i> ${data.asunto}</h3>
                             <p>${data.descripcion}</p>
-                            <p class='${prioridadColor}'><i class="fas fa-exclamation-circle"></i> Prioridad: ${data.prioridad}</p>
-                            <label>Asignar a: <i class="fas fa-user"></i></label>
-                            <input type='text' class='asignarInput border p-1 rounded w-full' data-id='${doc.id}' placeholder='Usuario'>
-                            <button class='archivarBtn bg-gray-400 p-1 rounded' data-id='${doc.id}'><i class="fas fa-archive"></i> Archivar</button>
+                            <p class='${prioridadColor} mt-2'><i class="fas fa-exclamation-circle"></i> Prioridad: ${data.prioridad || 'Sin asignar'}</p>
+                            <label class='mt-2'>Asignar a: <i class="fas fa-user"></i></label>
+                            <select class='asignarSelect border p-2 rounded w-full' data-id='${doc.id}'>
+                                <option value=''>Seleccionar usuario</option>
+                                ${opcionesUsuarios}
+                            </select>
+                            <button class='${archivados ? "desarchivarBtn bg-green-500" : "archivarBtn bg-gray-400"} p-2 rounded mt-3 w-full' data-id='${doc.id}'>
+                                <i class="fas ${archivados ? "fa-upload" : "fa-archive"}"></i> ${archivados ? "Desarchivar" : "Archivar"}
+                            </button>
                         </div>`;
                 });
             }
 
-            document.addEventListener("input", async (e) => {
-                if (e.target.classList.contains("asignarInput")) {
+            document.addEventListener("change", async (e) => {
+                if (e.target.classList.contains("asignarSelect")) {
                     const id = e.target.getAttribute("data-id");
                     const usuario = e.target.value;
                     await updateDoc(doc(db, "tickets", id), { asignadoA: usuario });
@@ -93,25 +95,32 @@
                     const id = e.target.getAttribute("data-id");
                     await updateDoc(doc(db, "tickets", id), { archivado: true });
                     alert("Ticket archivado");
-                    cargarTickets();
+                    cargarTickets(false);
+                }
+                if (e.target.classList.contains("desarchivarBtn")) {
+                    const id = e.target.getAttribute("data-id");
+                    await updateDoc(doc(db, "tickets", id), { archivado: false });
+                    alert("Ticket desarchivado");
+                    cargarTickets(true);
                 }
             });
+
+            archivedTicketsLink.addEventListener("click", () => cargarTickets(true));
+            activeTicketsLink.addEventListener("click", () => cargarTickets(false));
         });
     </script>
 </head>
-<body class="bg-gray-100 flex flex-col items-center min-h-screen">
-    <div id="authSection" class="bg-white p-6 rounded-lg shadow-lg w-96 mt-6">
-        <h2 class="text-xl font-bold mb-4 text-center"><i class="fas fa-user-lock"></i> Acceso Administrador</h2>
-        <form id="loginForm">
-            <input id="email" type="email" placeholder="Correo" required class="w-full p-2 mb-2 border rounded">
-            <input id="password" type="password" placeholder="Contraseña" required class="w-full p-2 mb-4 border rounded">
-            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded"><i class="fas fa-sign-in-alt"></i> Ingresar</button>
-        </form>
-    </div>
-
-    <div id="adminSection" class="hidden w-full max-w-4xl mt-6 p-6 bg-white shadow-lg rounded-lg">
-        <h2 class="text-2xl font-bold mb-4"><i class="fas fa-tools"></i> Panel de Administración</h2>
-        <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded mb-4"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold"><i class="fas fa-tools"></i> Panel de Administración</h1>
+        <nav>
+            <a id="activeTicketsLink" href="#" class="mr-4 text-white hover:underline">Tickets Activos</a>
+            <a id="archivedTicketsLink" href="#" class="text-white hover:underline">Tickets Archivados</a>
+        </nav>
+        <span id="userName"></span>
+    </header>
+    <div id="adminSection" class="w-full max-w-4xl mt-6 p-6 bg-white shadow-lg rounded-lg mx-auto">
+        <button id="logoutBtn" class="bg-red-500 text-white p-2 rounded mb-4 w-full"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
         <div id="ticketsContainer"></div>
     </div>
 </body>
