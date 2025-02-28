@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes - Sistema de Tickets</title>
+    <title>Dashboard de Reportes - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Incluye Chart.js desde un CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,31 +25,41 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             const reportDiv = document.getElementById("reportDiv");
-            const ctx = document.getElementById('ticketsChart').getContext('2d');
+            const ctxEstado = document.getElementById('ticketsChartEstado').getContext('2d');
+            const ctxPrioridad = document.getElementById('ticketsChartPrioridad').getContext('2d');
 
             try {
                 const querySnapshot = await getDocs(collection(db, "tickets"));
-                let abiertos = 0, enProceso = 0, cerrados = 0;
+                let totalTickets = 0, abiertos = 0, enProceso = 0, cerrados = 0;
+                let alta = 0, media = 0, baja = 0;
 
                 querySnapshot.forEach((doc) => {
-                    const estado = doc.data().estado;
-                    if (estado === "Abierto") abiertos++;
-                    else if (estado === "En proceso") enProceso++;
-                    else if (estado === "Cerrado") cerrados++;
+                    const ticket = doc.data();
+                    totalTickets++;
+                    if (ticket.estado === "Abierto") abiertos++;
+                    else if (ticket.estado === "En proceso") enProceso++;
+                    else if (ticket.estado === "Cerrado") cerrados++;
+
+                    if (ticket.prioridad === "Alta") alta++;
+                    else if (ticket.prioridad === "Media") media++;
+                    else if (ticket.prioridad === "Baja") baja++;
                 });
 
-                // Datos para el gráfico de barras
-                const labels = ['Abierto', 'En proceso', 'Cerrado'];
-                const data = [abiertos, enProceso, cerrados];
+                // Datos para gráficos
+                const estadosLabels = ['Abierto', 'En proceso', 'Cerrado'];
+                const estadosData = [abiertos, enProceso, cerrados];
 
-                // Crear el gráfico de barras con Chart.js
-                new Chart(ctx, {
+                const prioridadesLabels = ['Alta', 'Media', 'Baja'];
+                const prioridadesData = [alta, media, baja];
+
+                // Crear gráfico de barras para estados
+                new Chart(ctxEstado, {
                     type: 'bar',
                     data: {
-                        labels: labels,
+                        labels: estadosLabels,
                         datasets: [{
-                            label: 'Cantidad de Tickets',
-                            data: data,
+                            label: 'Tickets por Estado',
+                            data: estadosData,
                             backgroundColor: ['#ffeb3b', '#ff9800', '#4caf50'],
                             borderColor: ['#000000', '#000000', '#000000'],
                             borderWidth: 1
@@ -81,26 +91,82 @@
                     }
                 });
 
-                // Mostrar datos numéricos también
+                // Crear gráfico de barras para prioridades
+                new Chart(ctxPrioridad, {
+                    type: 'bar',
+                    data: {
+                        labels: prioridadesLabels,
+                        datasets: [{
+                            label: 'Tickets por Prioridad',
+                            data: prioridadesData,
+                            backgroundColor: ['#f44336', '#2196f3', '#4caf50'],
+                            borderColor: ['#000000', '#000000', '#000000'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Prioridad'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // Mostrar resumen numérico
                 reportDiv.innerHTML = `
-                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Reportes de Tickets</h3>
-                    <p class="text-gray-600">Tickets Abiertos: ${abiertos}</p>
-                    <p class="text-gray-600">Tickets en Proceso: ${enProceso}</p>
-                    <p class="text-gray-600">Tickets Cerrados: ${cerrados}</p>
-                    <div class="mt-6 h-64">
-                        <canvas id="ticketsChart"></canvas>
+                    <h3 class="text-2xl font-bold text-gray-800 text-center mb-6">Dashboard de Reportes de Tickets</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Resumen de Tickets</h4>
+                            <p class="text-gray-600">Total de Tickets: ${totalTickets}</p>
+                            <p class="text-gray-600">Abiertos: ${abiertos}</p>
+                            <p class="text-gray-600">En Proceso: ${enProceso}</p>
+                            <p class="text-gray-600">Cerrados: ${cerrados}</p>
+                            <p class="text-gray-600">Prioridad Alta: ${alta}</p>
+                            <p class="text-gray-600">Prioridad Media: ${media}</p>
+                            <p class="text-gray-600">Prioridad Baja: ${baja}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Tickets por Estado</h4>
+                            <div class="h-64">
+                                <canvas id="ticketsChartEstado"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-2">Tickets por Prioridad</h4>
+                            <div class="h-64">
+                                <canvas id="ticketsChartPrioridad"></canvas>
+                            </div>
+                        </div>
                     </div>
                 `;
             } catch (e) {
                 console.error("Error al cargar reportes: ", e);
-                reportDiv.innerHTML = '<p class="text-red-600">Error al cargar reportes. Revisa la consola.</p>';
+                reportDiv.innerHTML = '<p class="text-red-600 text-center">Error al cargar reportes. Revisa la consola.</p>';
             }
         });
     </script>
 </head>
-<body class="bg-gradient-to-b from-gray-800 to-blue-400 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-        <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Reportes de Tickets</h1>
+<body class="bg-gradient-to-b from-gray-800 to-blue-400 min-h-screen">
+    <div class="container mx-auto p-4">
         <div id="reportDiv"></div>
     </div>
 </body>
