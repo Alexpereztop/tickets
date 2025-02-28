@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -21,142 +18,40 @@
             appId: "1:857025500576:web:1140e9cd603125f368c0c5"
         };
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const logoutButton = document.getElementById("logoutButton");
+        document.addEventListener("DOMContentLoaded", async () => {
+            const reportDiv = document.getElementById("reportDiv");
 
-            // Verificar estado de autenticación
-            onAuthStateChanged(auth, (user) => {
-                if (!user) {
-                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
-                    window.location.href = "auth.html";
-                } else {
-                    console.log("Usuario autenticado:", user.email);
-                    logoutButton.style.display = "inline-block"; // Mostrar botón de cerrar sesión
-                    loadChartData(); // Cargar datos del gráfico solo si está autenticado
-                }
-            });
+            try {
+                const querySnapshot = await getDocs(collection(db, "tickets"));
+                let abiertos = 0, enProceso = 0, cerrados = 0;
 
-            // Manejar cierre de sesión
-            logoutButton.addEventListener("click", () => {
-                signOut(auth)
-                    .then(() => {
-                        console.log("Sesión cerrada");
-                        alert("Sesión cerrada exitosamente");
-                        window.location.href = "auth.html";
-                    })
-                    .catch((error) => {
-                        console.error("Error al cerrar sesión:", error.message);
-                        alert("Error al cerrar sesión: " + error.message);
-                    });
-            });
+                querySnapshot.forEach((doc) => {
+                    const estado = doc.data().estado;
+                    if (estado === "Abierto") abiertos++;
+                    else if (estado === "En proceso") enProceso++;
+                    else if (estado === "Cerrado") cerrados++;
+                });
 
-            // Función para cargar y mostrar los datos en el gráfico
-            async function loadChartData() {
-                try {
-                    const querySnapshot = await getDocs(collection(db, "tickets"));
-                    let abiertos = 0;
-                    let enProceso = 0;
-                    let cerrados = 0;
-
-                    // Contar tickets por estado
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        switch (data.estado) {
-                            case "Abierto":
-                                abiertos++;
-                                break;
-                            case "En proceso":
-                                enProceso++;
-                                break;
-                            case "Cerrado":
-                                cerrados++;
-                                break;
-                        }
-                    });
-
-                    // Configuración del gráfico con datos reales
-                    const ctx = document.getElementById('ticketChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Abiertos', 'En Proceso', 'Cerrados'],
-                            datasets: [{
-                                label: 'Número de Tickets',
-                                data: [abiertos, enProceso, cerrados],
-                                backgroundColor: ['#f87171', '#facc15', '#4ade80'],
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { display: false }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1 // Asegura que los valores sean enteros
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } catch (error) {
-                    console.error("Error al cargar los datos del gráfico:", error.code, error.message);
-                    alert("Error: " + getFriendlyErrorMessage(error.code));
-                }
-            }
-
-            // Función para mensajes de error más amigables
-            function getFriendlyErrorMessage(errorCode) {
-                switch (errorCode) {
-                    case "permission-denied":
-                        return "No tienes permiso para ver los reportes. Inicia sesión.";
-                    case "auth/operation-not-allowed":
-                        return "Operación no permitida. Contacta al administrador.";
-                    default:
-                        return "Ocurrió un error al cargar los reportes. Intenta de nuevo.";
-                }
+                reportDiv.innerHTML = `
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Reportes de Tickets</h3>
+                    <p class="text-gray-600">Tickets Abiertos: ${abiertos}</p>
+                    <p class="text-gray-600">Tickets en Proceso: ${enProceso}</p>
+                    <p class="text-gray-600">Tickets Cerrados: ${cerrados}</p>
+                `;
+            } catch (e) {
+                console.error("Error al cargar reportes: ", e);
+                reportDiv.innerHTML = '<p class="text-red-600">Error al cargar reportes. Revisa la consola.</p>';
             }
         });
     </script>
 </head>
-<body class="bg-gray-100">
-    
-    <!-- Menú Lateral -->
-    <div class="flex h-screen">
-        <nav class="w-64 bg-blue-600 text-white p-5 flex flex-col">
-            <h1 class="text-2xl font-bold mb-6"><i class="fas fa-ticket-alt"></i> Ticket Manager</h1>
-            <a href="index.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🏠 Inicio</a>
-            <a href="create-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🎫 Crear Ticket</a>
-            <a href="track-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🔍 Seguimiento</a>
-            <a href="admin.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📊 Dashboard</a>
-            <a href="reports.html" class="mb-3 bg-blue-500 p-2 rounded">📈 Reportes</a>
-        </nav>
-        
-        <!-- Contenido Principal -->
-        <div class="flex-1 p-10">
-            <header class="flex justify-between items-center">
-                <h2 class="text-3xl font-bold">Reportes del Sistema</h2>
-                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
-            </header>
-            
-            <!-- Sección de Reportes -->
-            <section class="mt-10 bg-white p-6 shadow-lg rounded-lg">
-                <h3 class="text-xl font-semibold mb-4">Resumen de Tickets</h3>
-                <canvas id="ticketChart"></canvas>
-            </section>
-        </div>
+<body class="bg-gradient-to-b from-gray-800 to-blue-400 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Reportes de Tickets</h1>
+        <div id="reportDiv"></div>
     </div>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
-    </footer>
 </body>
 </html>
