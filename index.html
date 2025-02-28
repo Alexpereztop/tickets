@@ -6,6 +6,53 @@
     <title>Inicio - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoutButton = document.getElementById("logoutButton");
+
+            // Verificar estado de autenticación
+            onAuthStateChanged(auth, (user) => {
+                if (!user) {
+                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
+                    window.location.href = "auth.html";
+                } else {
+                    console.log("Usuario autenticado:", user.email);
+                    // Mostrar botón de cerrar sesión si está autenticado
+                    logoutButton.style.display = "inline-block";
+                }
+            });
+
+            // Manejar cierre de sesión
+            logoutButton.addEventListener("click", () => {
+                signOut(auth)
+                    .then(() => {
+                        console.log("Sesión cerrada");
+                        alert("Sesión cerrada exitosamente");
+                        window.location.href = "auth.html";
+                    })
+                    .catch((error) => {
+                        console.error("Error al cerrar sesión:", error.message);
+                        alert("Error al cerrar sesión: " + error.message);
+                    });
+            });
+        });
+    </script>
 </head>
 <body class="bg-gray-100">
     
@@ -13,7 +60,7 @@
     <div class="flex h-screen">
         <nav class="w-64 bg-blue-600 text-white p-5 flex flex-col">
             <h1 class="text-2xl font-bold mb-6"><i class="fas fa-ticket-alt"></i> Ticket Manager</h1>
-            <a href="index.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🏠 Inicio</a>
+            <a href="index.html" class="mb-3 bg-blue-500 p-2 rounded">🏠 Inicio</a>
             <a href="create-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🎫 Crear Ticket</a>
             <a href="track-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🔍 Seguimiento</a>
             <a href="admin.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📊 Dashboard</a>
@@ -24,14 +71,14 @@
         <div class="flex-1 p-10">
             <header class="flex justify-between items-center">
                 <h2 class="text-3xl font-bold">Bienvenido al Sistema de Tickets</h2>
-                <a href="auth.html" class="bg-blue-600 text-white px-4 py-2 rounded">Iniciar Sesión</a>
+                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
             </header>
             
             <!-- Hero Section -->
             <section class="mt-10 text-center">
                 <h1 class="text-4xl font-bold">Gestión de Soporte Simplificada</h1>
                 <p class="text-gray-600 mt-4">Administra tus tickets de manera rápida y eficiente.</p>
-                <a href="create-ticket.html" class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded text-lg">Crear un Ticket</a>
+                <a href="create-ticket.html" class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded text-lg hover:bg-green-600 transition">Crear un Ticket</a>
             </section>
             
             <!-- Funcionalidades -->
@@ -57,7 +104,7 @@
     
     <!-- Footer -->
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
+        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>
