@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -19,11 +20,30 @@
             appId: "1:857025500576:web:1140e9cd603125f368c0c5"
         };
 
+        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
         document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById("ticketForm").addEventListener("submit", async function(event) {
+            const ticketForm = document.getElementById("ticketForm");
+            const logoutButton = document.getElementById("logoutButton");
+            const ticketIdMessage = document.getElementById("ticketIdMessage");
+            const generatedTicketId = document.getElementById("generatedTicketId");
+
+            // Verificar estado de autenticación
+            onAuthStateChanged(auth, (user) => {
+                if (!user) {
+                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
+                    window.location.href = "auth.html";
+                } else {
+                    console.log("Usuario autenticado:", user.email);
+                    logoutButton.style.display = "inline-block"; // Mostrar botón de cerrar sesión
+                }
+            });
+
+            // Manejar creación de ticket
+            ticketForm.addEventListener("submit", async (event) => {
                 event.preventDefault();
                 
                 const nombre = document.getElementById("nombre").value;
@@ -32,19 +52,52 @@
                 const descripcion = document.getElementById("descripcion").value;
                 const prioridad = document.getElementById("prioridad").value;
                 const fecha = new Date().toISOString();
-                
+
                 try {
                     const docRef = await addDoc(collection(db, "tickets"), {
-                        nombre, email, asunto, descripcion, prioridad, estado: "Abierto", fecha
+                        nombre,
+                        email,
+                        asunto,
+                        descripcion,
+                        prioridad,
+                        estado: "Abierto",
+                        fecha
                     });
-                    document.getElementById("generatedTicketId").innerText = docRef.id;
-                    document.getElementById("ticketIdMessage").classList.remove("hidden");
+                    generatedTicketId.innerText = docRef.id;
+                    ticketIdMessage.classList.remove("hidden");
                     alert("Ticket creado con éxito. Guarda tu ID: " + docRef.id);
+                    ticketForm.reset(); // Limpiar formulario tras éxito
                 } catch (error) {
-                    console.error("Error al crear ticket", error);
-                    alert("Error al crear ticket: " + error.message);
+                    console.error("Error al crear ticket:", error.code, error.message);
+                    alert("Error al crear ticket: " + getFriendlyErrorMessage(error.code));
                 }
             });
+
+            // Manejar cierre de sesión
+            logoutButton.addEventListener("click", () => {
+                signOut(auth)
+                    .then(() => {
+                        console.log("Sesión cerrada");
+                        alert("Sesión cerrada exitosamente");
+                        window.location.href = "auth.html";
+                    })
+                    .catch((error) => {
+                        console.error("Error al cerrar sesión:", error.message);
+                        alert("Error al cerrar sesión: " + error.message);
+                    });
+            });
+
+            // Función para mensajes de error más amigables
+            function getFriendlyErrorMessage(errorCode) {
+                switch (errorCode) {
+                    case "auth/operation-not-allowed":
+                        return "Operación no permitida. Contacta al administrador.";
+                    case "permission-denied":
+                        return "No tienes permiso para crear tickets. Inicia sesión.";
+                    default:
+                        return "Ocurrió un error. Por favor, intenta de nuevo.";
+                }
+            }
         });
     </script>
 </head>
@@ -65,7 +118,7 @@
         <div class="flex-1 p-10">
             <header class="flex justify-between items-center">
                 <h2 class="text-3xl font-bold">Crear un Ticket</h2>
-                <a href="auth.html" class="bg-blue-600 text-white px-4 py-2 rounded">Iniciar Sesión</a>
+                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
             </header>
             
             <!-- Formulario de Creación de Ticket -->
@@ -75,13 +128,13 @@
                     <input id="nombre" type="text" placeholder="Nombre" required class="w-full p-2 mb-3 border rounded">
                     <input id="email" type="email" placeholder="Email" required class="w-full p-2 mb-3 border rounded">
                     <input id="asunto" type="text" placeholder="Asunto" required class="w-full p-2 mb-3 border rounded">
-                    <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-3 border rounded"></textarea>
+                    <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-3 border rounded h-24"></textarea>
                     <select id="prioridad" class="w-full p-2 mb-3 border rounded">
                         <option value="Baja">Prioridad Baja</option>
                         <option value="Media">Prioridad Media</option>
                         <option value="Alta">Prioridad Alta</option>
                     </select>
-                    <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Enviar Ticket</button>
+                    <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition">Enviar Ticket</button>
                 </form>
                 <p id="ticketIdMessage" class="mt-4 text-green-600 text-sm hidden">Tu ID de Ticket es: <span id="generatedTicketId"></span></p>
             </section>
@@ -90,7 +143,7 @@
     
     <!-- Footer -->
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
-        <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
+        <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>
