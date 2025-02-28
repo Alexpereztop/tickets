@@ -3,59 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soporte de Tickets</title>
+    <title>Inicio - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
-            authDomain: "tickets-5a8b7.firebaseapp.com",
-            projectId: "tickets-5a8b7",
-            storageBucket: "tickets-5a8b7.firebasestorage.app",
-            messagingSenderId: "857025500576",
-            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        document.getElementById("ticketForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const nombre = document.getElementById("nombre").value;
-            const email = document.getElementById("email").value;
-            const asunto = document.getElementById("asunto").value;
-            const descripcion = document.getElementById("descripcion").value;
-            const fecha = new Date().toISOString();
-            const estado = "Abierto";
-
-            await addDoc(collection(db, "tickets"), {
-                nombre, email, asunto, descripcion, fecha, estado
-            });
-
-            alert("Ticket creado con éxito, te contactaremos pronto.");
-            document.getElementById("ticketForm").reset();
-        });
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 flex flex-col items-center min-h-screen">
-    <div class="w-full bg-cover bg-center h-48" style="background-image: url('images/322024.jpg');">
-        <div class="h-full flex items-center justify-center text-white text-3xl font-bold bg-black bg-opacity-50">
-            Soporte de Tickets
+<body class="bg-gray-100">
+    
+    <!-- Menú Lateral -->
+    <div class="flex h-screen">
+        <nav class="w-64 bg-blue-600 text-white p-5 flex flex-col">
+            <h1 class="text-2xl font-bold mb-6"><i class="fas fa-ticket-alt"></i> Ticket Manager</h1>
+            <a href="index.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🏠 Inicio</a>
+            <a href="create-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🎫 Crear Ticket</a>
+            <a href="track-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🔍 Seguimiento</a>
+            <a href="admin.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📊 Dashboard</a>
+            <a href="reports.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📈 Reportes</a>
+        </nav>
+        
+        <!-- Contenido Principal -->
+        <div class="flex-1 p-10">
+            <header class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold">Bienvenido al Sistema de Tickets</h2>
+                <a href="auth.html" class="bg-blue-600 text-white px-4 py-2 rounded">Iniciar Sesión</a>
+            </header>
+            
+            <!-- Hero Section -->
+            <section class="mt-10 text-center">
+                <h1 class="text-4xl font-bold">Gestión de Soporte Simplificada</h1>
+                <p class="text-gray-600 mt-4">Administra tus tickets de manera rápida y eficiente.</p>
+                <a href="create-ticket.html" class="mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded text-lg">Crear un Ticket</a>
+            </section>
+            
+            <!-- Funcionalidades -->
+            <section class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div class="bg-white shadow-lg p-6 rounded-lg">
+                    <i class="fas fa-clock text-blue-600 text-3xl"></i>
+                    <h3 class="text-xl font-semibold mt-4">Soporte 24/7</h3>
+                    <p class="text-gray-600">Resolvemos tus problemas en cualquier momento.</p>
+                </div>
+                <div class="bg-white shadow-lg p-6 rounded-lg">
+                    <i class="fas fa-user-shield text-green-600 text-3xl"></i>
+                    <h3 class="text-xl font-semibold mt-4">Seguridad</h3>
+                    <p class="text-gray-600">Tus datos están protegidos con las mejores prácticas.</p>
+                </div>
+                <div class="bg-white shadow-lg p-6 rounded-lg">
+                    <i class="fas fa-chart-line text-yellow-600 text-3xl"></i>
+                    <h3 class="text-xl font-semibold mt-4">Reportes y Análisis</h3>
+                    <p class="text-gray-600">Consulta el estado de tus tickets en tiempo real.</p>
+                </div>
+            </section>
         </div>
     </div>
-    <div class="bg-white p-6 rounded-lg shadow-lg w-96 mt-6">
-        <h2 class="text-xl font-bold mb-4 text-center">Crear un Ticket</h2>
-        <p class="text-gray-600 text-sm mb-4">Por favor, llena los siguientes campos para reportar tu problema. Nos pondremos en contacto contigo lo antes posible.</p>
-        <form id="ticketForm">
-            <input id="nombre" type="text" placeholder="Nombre" required class="w-full p-2 mb-2 border rounded">
-            <input id="email" type="email" placeholder="Email" required class="w-full p-2 mb-2 border rounded">
-            <input id="asunto" type="text" placeholder="Asunto" required class="w-full p-2 mb-2 border rounded">
-            <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-4 border rounded"></textarea>
-            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Enviar Ticket</button>
-        </form>
-    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center p-4 mt-10">
+        <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
+    </footer>
 </body>
 </html>
