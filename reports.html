@@ -45,12 +45,12 @@
                     else if (ticket.prioridad === "Baja") baja++;
                 });
 
-                // Datos para gráficos
+                // Datos para gráficos basados en los tickets actuales
                 const estadosLabels = ['Abierto', 'En proceso', 'Cerrado'];
-                const estadosData = [abiertos, enProceso, cerrados];
+                const estadosData = [abiertos, enProceso, cerrados]; // [1, 1, 0] según los datos
 
                 const prioridadesLabels = ['Alta', 'Media', 'Baja'];
-                const prioridadesData = [alta, media, baja];
+                const prioridadesData = [alta, media, baja]; // [2, 0, 0] según los datos
 
                 // Crear gráfico de barras para estados
                 new Chart(ctxEstado, {
@@ -130,7 +130,7 @@
                     }
                 });
 
-                // Mostrar resumen numérico
+                // Mostrar resumen numérico y gráficos
                 reportDiv.innerHTML = `
                     <h3 class="text-2xl font-bold text-gray-800 text-center mb-6">Dashboard de Reportes de Tickets</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
