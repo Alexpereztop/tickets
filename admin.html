@@ -33,26 +33,26 @@
                     <td class="border p-2">${data.nombre} (${data.email})</td>
                     <td class="border p-2">${data.asunto}</td>
                     <td class="border p-2">${data.descripcion}</td>
-                    <td class="border p-2">${data.estado}</td>
+                    <td class="border p-2">
+                        <select class="estadoSelect border p-1 rounded" data-id="${doc.id}">
+                            <option value="Abierto" ${data.estado === "Abierto" ? "selected" : ""}>Abierto</option>
+                            <option value="En proceso" ${data.estado === "En proceso" ? "selected" : ""}>En proceso</option>
+                            <option value="Cerrado" ${data.estado === "Cerrado" ? "selected" : ""}>Cerrado</option>
+                        </select>
+                    </td>
                     <td class="border p-2">${data.prioridad}</td>
                     <td class="border p-2">${data.fecha}</td>
-                    <td class="border p-2">
-                        <button class="editTicket bg-blue-500 text-white px-3 py-1 rounded" data-id="${doc.id}">Editar</button>
-                    </td>
                 </tr>`;
                 ticketsTable.innerHTML += row;
             });
 
-            document.querySelectorAll(".editTicket").forEach(button => {
-                button.addEventListener("click", async (event) => {
+            document.querySelectorAll(".estadoSelect").forEach(select => {
+                select.addEventListener("change", async (event) => {
                     const ticketId = event.target.getAttribute("data-id");
-                    const newEstado = prompt("Ingrese el nuevo estado para el ticket:", "En proceso");
-                    if (newEstado) {
-                        const ticketRef = doc(db, "tickets", ticketId);
-                        await updateDoc(ticketRef, { estado: newEstado });
-                        alert("Estado actualizado correctamente");
-                        location.reload();
-                    }
+                    const newEstado = event.target.value;
+                    const ticketRef = doc(db, "tickets", ticketId);
+                    await updateDoc(ticketRef, { estado: newEstado });
+                    alert("Estado actualizado correctamente");
                 });
             });
         });
@@ -91,7 +91,6 @@
                             <th class="border p-2">Estado</th>
                             <th class="border p-2">Prioridad</th>
                             <th class="border p-2">Fecha de Creación</th>
-                            <th class="border p-2">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="ticketsTable">
