@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluye Chart.js desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
@@ -23,6 +25,7 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             const reportDiv = document.getElementById("reportDiv");
+            const ctx = document.getElementById('ticketsChart').getContext('2d');
 
             try {
                 const querySnapshot = await getDocs(collection(db, "tickets"));
@@ -35,11 +38,58 @@
                     else if (estado === "Cerrado") cerrados++;
                 });
 
+                // Datos para el gráfico de barras
+                const labels = ['Abierto', 'En proceso', 'Cerrado'];
+                const data = [abiertos, enProceso, cerrados];
+
+                // Crear el gráfico de barras con Chart.js
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Cantidad de Tickets',
+                            data: data,
+                            backgroundColor: ['#ffeb3b', '#ff9800', '#4caf50'],
+                            borderColor: ['#000000', '#000000', '#000000'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Estado'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // Mostrar datos numéricos también
                 reportDiv.innerHTML = `
                     <h3 class="text-xl font-semibold mb-4 text-gray-800">Reportes de Tickets</h3>
                     <p class="text-gray-600">Tickets Abiertos: ${abiertos}</p>
                     <p class="text-gray-600">Tickets en Proceso: ${enProceso}</p>
                     <p class="text-gray-600">Tickets Cerrados: ${cerrados}</p>
+                    <div class="mt-6 h-64">
+                        <canvas id="ticketsChart"></canvas>
+                    </div>
                 `;
             } catch (e) {
                 console.error("Error al cargar reportes: ", e);
@@ -49,7 +99,7 @@
     </script>
 </head>
 <body class="bg-gradient-to-b from-gray-800 to-blue-400 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
         <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Reportes de Tickets</h1>
         <div id="reportDiv"></div>
     </div>
