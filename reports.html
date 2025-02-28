@@ -7,6 +7,124 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoutButton = document.getElementById("logoutButton");
+
+            // Verificar estado de autenticación
+            onAuthStateChanged(auth, (user) => {
+                if (!user) {
+                    console.log("No hay usuario autenticado, redirigiendo a auth.html");
+                    window.location.href = "auth.html";
+                } else {
+                    console.log("Usuario autenticado:", user.email);
+                    logoutButton.style.display = "inline-block"; // Mostrar botón de cerrar sesión
+                    loadChartData(); // Cargar datos del gráfico solo si está autenticado
+                }
+            });
+
+            // Manejar cierre de sesión
+            logoutButton.addEventListener("click", () => {
+                signOut(auth)
+                    .then(() => {
+                        console.log("Sesión cerrada");
+                        alert("Sesión cerrada exitosamente");
+                        window.location.href = "auth.html";
+                    })
+                    .catch((error) => {
+                        console.error("Error al cerrar sesión:", error.message);
+                        alert("Error al cerrar sesión: " + error.message);
+                    });
+            });
+
+            // Función para cargar y mostrar los datos en el gráfico
+            async function loadChartData() {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "tickets"));
+                    let abiertos = 0;
+                    let enProceso = 0;
+                    let cerrados = 0;
+
+                    // Contar tickets por estado
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        switch (data.estado) {
+                            case "Abierto":
+                                abiertos++;
+                                break;
+                            case "En proceso":
+                                enProceso++;
+                                break;
+                            case "Cerrado":
+                                cerrados++;
+                                break;
+                        }
+                    });
+
+                    // Configuración del gráfico con datos reales
+                    const ctx = document.getElementById('ticketChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Abiertos', 'En Proceso', 'Cerrados'],
+                            datasets: [{
+                                label: 'Número de Tickets',
+                                data: [abiertos, enProceso, cerrados],
+                                backgroundColor: ['#f87171', '#facc15', '#4ade80'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1 // Asegura que los valores sean enteros
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error al cargar los datos del gráfico:", error.code, error.message);
+                    alert("Error: " + getFriendlyErrorMessage(error.code));
+                }
+            }
+
+            // Función para mensajes de error más amigables
+            function getFriendlyErrorMessage(errorCode) {
+                switch (errorCode) {
+                    case "permission-denied":
+                        return "No tienes permiso para ver los reportes. Inicia sesión.";
+                    case "auth/operation-not-allowed":
+                        return "Operación no permitida. Contacta al administrador.";
+                    default:
+                        return "Ocurrió un error al cargar los reportes. Intenta de nuevo.";
+                }
+            }
+        });
+    </script>
 </head>
 <body class="bg-gray-100">
     
@@ -25,7 +143,7 @@
         <div class="flex-1 p-10">
             <header class="flex justify-between items-center">
                 <h2 class="text-3xl font-bold">Reportes del Sistema</h2>
-                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded">Cerrar Sesión</button>
+                <button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition" style="display: none;">Cerrar Sesión</button>
             </header>
             
             <!-- Sección de Reportes -->
@@ -40,92 +158,5 @@
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
         <p>© 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
-
-    <script type="module">
-        // Importar funciones de Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
-            authDomain: "tickets-5a8b7.firebaseapp.com",
-            projectId: "tickets-5a8b7",
-            storageBucket: "tickets-5a8b7.firebasestorage.app",
-            messagingSenderId: "857025500576",
-            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
-        };
-
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Función para cargar y mostrar los datos en el gráfico
-        async function loadChartData() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "tickets"));
-                let abiertos = 0;
-                let enProceso = 0;
-                let cerrados = 0;
-
-                // Contar tickets por estado
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    switch (data.estado) {
-                        case "Abierto":
-                            abiertos++;
-                            break;
-                        case "En proceso":
-                            enProceso++;
-                            break;
-                        case "Cerrado":
-                            cerrados++;
-                            break;
-                    }
-                });
-
-                // Configuración del gráfico con datos reales
-                const ctx = document.getElementById('ticketChart').getContext('2d');
-                const ticketChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Abiertos', 'En Proceso', 'Cerrados'],
-                        datasets: [{
-                            label: 'Número de Tickets',
-                            data: [abiertos, enProceso, cerrados],
-                            backgroundColor: ['#f87171', '#facc15', '#4ade80'],
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1 // Asegura que los valores sean enteros
-                                }
-                            }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Error al cargar los datos del gráfico:", error);
-            }
-        }
-
-        // Cargar datos cuando la página esté lista
-        document.addEventListener("DOMContentLoaded", () => {
-            loadChartData();
-
-            // Evento del botón de cerrar sesión
-            document.getElementById("logoutButton").addEventListener("click", function() {
-                alert("Sesión cerrada");
-                window.location.href = "auth.html";
-            });
-        });
-    </script>
 </body>
 </html>
