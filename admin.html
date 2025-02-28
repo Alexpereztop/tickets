@@ -56,10 +56,11 @@
                     const data = doc.data();
                     if (data.archivado !== archivados) return;
                     const prioridadColor = data.prioridad === 'Alta' ? 'text-red-500' : data.prioridad === 'Media' ? 'text-yellow-500' : 'text-green-500';
-                    let opcionesUsuarios = usuariosDisponibles.map(user => `<option value='${user}'>${user}</option>`).join("");
+                    let opcionesUsuarios = usuariosDisponibles.map(user => `<option value='${user}' ${data.asignadoA === user ? 'selected' : ''}>${user}</option>`).join("");
                     ticketsContainer.innerHTML += `
                         <div class='p-6 bg-white shadow-lg rounded-lg mb-4'>
                             <h3 class='text-lg font-bold mb-2'><i class="fas fa-ticket-alt"></i> ${data.asunto}</h3>
+                            <p><strong>Solicitante:</strong> ${data.nombre} (${data.email})</p>
                             <p>${data.descripcion}</p>
                             <p class='${prioridadColor} mt-2'><i class="fas fa-exclamation-circle"></i> Prioridad: 
                                 <select class='prioridadSelect border p-2 rounded w-full' data-id='${doc.id}'>
@@ -81,6 +82,9 @@
                                     ${opcionesUsuarios}
                                 </select>
                             </p>
+                            <button class='guardarBtn bg-blue-500 text-white p-2 rounded mt-3 w-full' data-id='${doc.id}'>
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
                             <button class='${archivados ? "desarchivarBtn bg-green-500" : "archivarBtn bg-gray-400"} p-2 rounded mt-3 w-full' data-id='${doc.id}'>
                                 <i class="fas ${archivados ? "fa-upload" : "fa-archive"}"></i> ${archivados ? "Desarchivar" : "Archivar"}
                             </button>
@@ -88,25 +92,15 @@
                 });
             }
 
-            document.addEventListener("change", async (e) => {
-                const id = e.target.getAttribute("data-id");
-                if (e.target.classList.contains("asignarSelect")) {
-                    await updateDoc(doc(db, "tickets", id), { asignadoA: e.target.value });
-                } else if (e.target.classList.contains("prioridadSelect")) {
-                    await updateDoc(doc(db, "tickets", id), { prioridad: e.target.value });
-                } else if (e.target.classList.contains("estadoSelect")) {
-                    await updateDoc(doc(db, "tickets", id), { estado: e.target.value });
-                }
-            });
-
             document.addEventListener("click", async (e) => {
                 const id = e.target.getAttribute("data-id");
-                if (e.target.classList.contains("archivarBtn")) {
-                    await updateDoc(doc(db, "tickets", id), { archivado: true });
-                    cargarTickets(false);
-                } else if (e.target.classList.contains("desarchivarBtn")) {
-                    await updateDoc(doc(db, "tickets", id), { archivado: false });
-                    cargarTickets(true);
+                if (e.target.classList.contains("guardarBtn")) {
+                    const ticketRef = doc(db, "tickets", id);
+                    const prioridad = document.querySelector(`.prioridadSelect[data-id='${id}']`).value;
+                    const estado = document.querySelector(`.estadoSelect[data-id='${id}']`).value;
+                    const asignadoA = document.querySelector(`.asignarSelect[data-id='${id}']`).value;
+                    await updateDoc(ticketRef, { prioridad, estado, asignadoA });
+                    alert("Cambios guardados correctamente");
                 }
             });
 
