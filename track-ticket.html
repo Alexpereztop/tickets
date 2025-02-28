@@ -6,6 +6,22 @@
     <title>Seguimiento de Ticket - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
+            authDomain: "tickets-5a8b7.firebaseapp.com",
+            projectId: "tickets-5a8b7",
+            storageBucket: "tickets-5a8b7.firebasestorage.app",
+            messagingSenderId: "857025500576",
+            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+    </script>
 </head>
 <body class="bg-gray-100">
     
@@ -52,17 +68,24 @@
         <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
 
-    <script>
-        document.getElementById("trackForm").addEventListener("submit", function(event) {
+    <script type="module">
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        document.getElementById("trackForm").addEventListener("submit", async function(event) {
             event.preventDefault();
             const ticketId = document.getElementById("ticketId").value;
-            if (ticketId) {
-                // Simulación de datos
-                document.getElementById("ticketAsunto").innerText = "Problema con la conexión";
-                document.getElementById("ticketDescripcion").innerText = "No puedo acceder a mi cuenta desde ayer.";
-                document.getElementById("ticketEstado").innerText = "En proceso";
-                document.getElementById("ticketFecha").innerText = "2025-02-28";
+            const ticketRef = doc(db, "tickets", ticketId);
+            const ticketSnap = await getDoc(ticketRef);
+
+            if (ticketSnap.exists()) {
+                const data = ticketSnap.data();
+                document.getElementById("ticketAsunto").innerText = data.asunto;
+                document.getElementById("ticketDescripcion").innerText = data.descripcion;
+                document.getElementById("ticketEstado").innerText = data.estado;
+                document.getElementById("ticketFecha").innerText = data.fecha;
                 document.getElementById("ticketResult").classList.remove("hidden");
+            } else {
+                alert("No se encontró el ticket");
             }
         });
     </script>
