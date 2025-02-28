@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, collection, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
@@ -69,23 +69,33 @@
     </footer>
 
     <script type="module">
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
+        import { getDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        
         document.getElementById("trackForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            const ticketId = document.getElementById("ticketId").value;
-            const ticketRef = doc(db, "tickets", ticketId);
-            const ticketSnap = await getDoc(ticketRef);
-
-            if (ticketSnap.exists()) {
-                const data = ticketSnap.data();
-                document.getElementById("ticketAsunto").innerText = data.asunto;
-                document.getElementById("ticketDescripcion").innerText = data.descripcion;
-                document.getElementById("ticketEstado").innerText = data.estado;
-                document.getElementById("ticketFecha").innerText = data.fecha;
-                document.getElementById("ticketResult").classList.remove("hidden");
-            } else {
-                alert("No se encontró el ticket");
+            const ticketId = document.getElementById("ticketId").value.trim();
+            if (!ticketId) {
+                alert("Por favor, ingrese un ID de ticket válido");
+                return;
+            }
+            
+            try {
+                const ticketRef = doc(db, "tickets", ticketId);
+                const ticketSnap = await getDoc(ticketRef);
+                
+                if (ticketSnap.exists()) {
+                    const data = ticketSnap.data();
+                    document.getElementById("ticketAsunto").innerText = data.asunto;
+                    document.getElementById("ticketDescripcion").innerText = data.descripcion;
+                    document.getElementById("ticketEstado").innerText = data.estado;
+                    document.getElementById("ticketFecha").innerText = data.fecha;
+                    document.getElementById("ticketResult").classList.remove("hidden");
+                } else {
+                    alert("No se encontró el ticket con ese ID");
+                }
+            } catch (error) {
+                console.error("Error al buscar ticket", error);
+                alert("Hubo un error al consultar el ticket");
             }
         });
     </script>
