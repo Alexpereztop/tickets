@@ -21,6 +21,31 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("ticketForm").addEventListener("submit", async function(event) {
+                event.preventDefault();
+                
+                const nombre = document.getElementById("nombre").value;
+                const email = document.getElementById("email").value;
+                const asunto = document.getElementById("asunto").value;
+                const descripcion = document.getElementById("descripcion").value;
+                const prioridad = document.getElementById("prioridad").value;
+                const fecha = new Date().toISOString();
+                
+                try {
+                    const docRef = await addDoc(collection(db, "tickets"), {
+                        nombre, email, asunto, descripcion, prioridad, estado: "Abierto", fecha
+                    });
+                    document.getElementById("generatedTicketId").innerText = docRef.id;
+                    document.getElementById("ticketIdMessage").classList.remove("hidden");
+                    alert("Ticket creado con éxito. Guarda tu ID: " + docRef.id);
+                } catch (error) {
+                    console.error("Error al crear ticket", error);
+                    alert("Error al crear ticket: " + error.message);
+                }
+            });
+        });
     </script>
 </head>
 <body class="bg-gray-100">
@@ -67,32 +92,5 @@
     <footer class="bg-gray-800 text-white text-center p-4 mt-10">
         <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
     </footer>
-
-    <script type="module">
-        import { addDoc, collection } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        
-        document.getElementById("ticketForm").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            
-            const nombre = document.getElementById("nombre").value;
-            const email = document.getElementById("email").value;
-            const asunto = document.getElementById("asunto").value;
-            const descripcion = document.getElementById("descripcion").value;
-            const prioridad = document.getElementById("prioridad").value;
-            const fecha = new Date().toISOString();
-
-            try {
-                const docRef = await addDoc(collection(db, "tickets"), {
-                    nombre, email, asunto, descripcion, prioridad, estado: "Abierto", fecha
-                });
-                document.getElementById("generatedTicketId").innerText = docRef.id;
-                document.getElementById("ticketIdMessage").classList.remove("hidden");
-                alert("Ticket creado con éxito. Guarda tu ID: " + docRef.id);
-            } catch (error) {
-                console.error("Error al crear ticket", error);
-                alert("Error al crear ticket: " + error.message);
-            }
-        });
-    </script>
 </body>
 </html>
