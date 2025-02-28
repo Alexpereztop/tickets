@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
@@ -19,48 +19,90 @@
             appId: "1:857025500576:web:1140e9cd603125f368c0c5"
         };
 
+        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
         document.addEventListener("DOMContentLoaded", () => {
+            const loginForm = document.getElementById("loginForm");
+            const registerLink = document.getElementById("registerLink");
+
+            // Verificar estado de autenticación
             onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    console.log("Usuario autenticado", user.email);
-                    window.location.href = "admin.html";
+                    console.log("Usuario autenticado:", user.email);
+                    window.location.href = "admin.html"; // Redirige si ya está autenticado
                 }
             });
+
+            // Manejar inicio de sesión
+            loginForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const email = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        console.log("Inicio de sesión exitoso:", userCredential.user.email);
+                        alert("Inicio de sesión exitoso");
+                        window.location.href = "admin.html";
+                    })
+                    .catch((error) => {
+                        console.error("Error de inicio de sesión:", error.code, error.message);
+                        alert("Error: " + getFriendlyErrorMessage(error.code));
+                    });
+            });
+
+            // Manejar registro (opcional)
+            registerLink.addEventListener("click", (event) => {
+                event.preventDefault();
+                const email = document.getElementById("email").value;
+                const password = document.getElementById("password").value;
+
+                if (email && password) {
+                    createUserWithEmailAndPassword(auth, email, password)
+                        .then((userCredential) => {
+                            console.log("Usuario registrado:", userCredential.user.email);
+                            alert("Registro exitoso, ahora inicia sesión.");
+                        })
+                        .catch((error) => {
+                            console.error("Error de registro:", error.code, error.message);
+                            alert("Error: " + getFriendlyErrorMessage(error.code));
+                        });
+                } else {
+                    alert("Por favor, ingresa un correo y contraseña para registrarte.");
+                }
+            });
+
+            // Función para mensajes de error más amigables
+            function getFriendlyErrorMessage(errorCode) {
+                switch (errorCode) {
+                    case "auth/invalid-email":
+                        return "El correo electrónico no es válido.";
+                    case "auth/user-not-found":
+                        return "No se encontró un usuario con este correo.";
+                    case "auth/wrong-password":
+                        return "Contraseña incorrecta.";
+                    case "auth/email-already-in-use":
+                        return "Este correo ya está registrado.";
+                    case "auth/weak-password":
+                        return "La contraseña debe tener al menos 6 caracteres.";
+                    default:
+                        return "Ocurrió un error. Por favor, intenta de nuevo.";
+                }
+            }
         });
     </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-    
     <div class="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 class="text-2xl font-bold text-center mb-6">Iniciar Sesión</h2>
         <form id="loginForm">
             <input id="email" type="email" placeholder="Correo Electrónico" required class="w-full p-2 mb-3 border rounded">
             <input id="password" type="password" placeholder="Contraseña" required class="w-full p-2 mb-3 border rounded">
-            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Ingresar</button>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Ingresar</button>
         </form>
-        <p class="text-center text-sm mt-4">¿No tienes cuenta? <a id="registerLink" href="#" class="text-blue-600">Regístrate</a></p>
+        <p class="text-center text-sm mt-4">¿No tienes cuenta? <a id="registerLink" href="#" class="text-blue-600 hover:underline">Regístrate</a></p>
     </div>
-    
-    <script>
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    console.log("Inicio de sesión exitoso", userCredential.user);
-                    alert("Inicio de sesión exitoso");
-                    window.location.href = "admin.html";
-                })
-                .catch((error) => {
-                    console.error("Error de inicio de sesión", error);
-                    alert("Error: " + error.message);
-                });
-        });
-    </script>
 </body>
 </html>
