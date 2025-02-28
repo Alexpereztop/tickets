@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
@@ -30,13 +30,30 @@
                 const data = doc.data();
                 const row = `<tr class="border">
                     <td class="border p-2">${doc.id}</td>
+                    <td class="border p-2">${data.nombre} (${data.email})</td>
                     <td class="border p-2">${data.asunto}</td>
+                    <td class="border p-2">${data.descripcion}</td>
                     <td class="border p-2">${data.estado}</td>
+                    <td class="border p-2">${data.prioridad}</td>
+                    <td class="border p-2">${data.fecha}</td>
                     <td class="border p-2">
-                        <button class="bg-blue-500 text-white px-3 py-1 rounded">Editar</button>
+                        <button class="editTicket bg-blue-500 text-white px-3 py-1 rounded" data-id="${doc.id}">Editar</button>
                     </td>
                 </tr>`;
                 ticketsTable.innerHTML += row;
+            });
+
+            document.querySelectorAll(".editTicket").forEach(button => {
+                button.addEventListener("click", async (event) => {
+                    const ticketId = event.target.getAttribute("data-id");
+                    const newEstado = prompt("Ingrese el nuevo estado para el ticket:", "En proceso");
+                    if (newEstado) {
+                        const ticketRef = doc(db, "tickets", ticketId);
+                        await updateDoc(ticketRef, { estado: newEstado });
+                        alert("Estado actualizado correctamente");
+                        location.reload();
+                    }
+                });
             });
         });
     </script>
@@ -68,8 +85,12 @@
                     <thead>
                         <tr class="bg-gray-200">
                             <th class="border p-2">ID</th>
+                            <th class="border p-2">Solicitante</th>
                             <th class="border p-2">Asunto</th>
+                            <th class="border p-2">Descripción</th>
                             <th class="border p-2">Estado</th>
+                            <th class="border p-2">Prioridad</th>
+                            <th class="border p-2">Fecha de Creación</th>
                             <th class="border p-2">Acciones</th>
                         </tr>
                     </thead>
