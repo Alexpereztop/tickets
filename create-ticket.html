@@ -3,116 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Gestión de Tickets</title>
+    <title>Crear Ticket - Sistema de Tickets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDTnI6OOXh05irRAPz0yj3SbqmMBlRZyGw",
-            authDomain: "tickets-5a8b7.firebaseapp.com",
-            projectId: "tickets-5a8b7",
-            storageBucket: "tickets-5a8b7.firebasestorage.app",
-            messagingSenderId: "857025500576",
-            appId: "1:857025500576:web:1140e9cd603125f368c0c5"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        let usuariosDisponibles = [];
-
-        document.addEventListener("DOMContentLoaded", async () => {
-            const ticketsContainer = document.getElementById("ticketsContainer");
-            const userNameDisplay = document.getElementById("userName");
-            const loginButton = document.getElementById("loginButton");
-            const logoutButton = document.getElementById("logoutButton");
-            const archivedTicketsLink = document.getElementById("archivedTicketsLink");
-            const activeTicketsLink = document.getElementById("activeTicketsLink");
-            const loginForm = document.getElementById("loginForm");
-            const loginSection = document.getElementById("loginSection");
-            const adminSection = document.getElementById("adminSection");
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userNameDisplay.textContent = user.email;
-                    loginButton.classList.add("hidden");
-                    logoutButton.classList.remove("hidden");
-                    loginSection.classList.add("hidden");
-                    adminSection.classList.remove("hidden");
-                    await cargarUsuarios();
-                    cargarTickets(false);
-                } else {
-                    loginButton.classList.remove("hidden");
-                    logoutButton.classList.add("hidden");
-                    loginSection.classList.remove("hidden");
-                    adminSection.classList.add("hidden");
-                }
-            });
-
-            loginForm.addEventListener("submit", (e) => {
-                e.preventDefault();
-                const email = document.getElementById("email").value;
-                const password = document.getElementById("password").value;
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(() => alert("Inicio de sesión exitoso"))
-                    .catch(error => alert("Error: " + error.message));
-            });
-
-            logoutButton.addEventListener("click", () => {
-                signOut(auth).then(() => alert("Sesión cerrada"));
-            });
-
-            async function cargarUsuarios() {
-                const querySnapshot = await getDocs(collection(db, "usuarios"));
-                usuariosDisponibles = querySnapshot.docs.map(doc => doc.data().email);
-            }
-
-            async function cargarTickets(archivados) {
-                ticketsContainer.innerHTML = "";
-                const querySnapshot = await getDocs(collection(db, "tickets"));
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.archivado !== archivados) return;
-                    ticketsContainer.innerHTML += `
-                        <div class='p-6 bg-white shadow-lg rounded-lg mb-4'>
-                            <h3 class='text-lg font-bold mb-2'><i class="fas fa-ticket-alt"></i> ${data.asunto}</h3>
-                            <p><strong>Solicitante:</strong> ${data.nombre} (${data.email})</p>
-                            <p>${data.descripcion}</p>
-                        </div>`;
-                });
-            }
-
-            archivedTicketsLink.addEventListener("click", () => cargarTickets(true));
-            activeTicketsLink.addEventListener("click", () => cargarTickets(false));
-        });
-    </script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold"><i class="fas fa-tools"></i> Panel de Administración</h1>
-        <nav>
-            <a id="activeTicketsLink" href="#" class="mr-4 text-white hover:underline">Tickets Activos</a>
-            <a id="archivedTicketsLink" href="#" class="text-white hover:underline">Tickets Archivados</a>
+<body class="bg-gray-100">
+    
+    <!-- Menú Lateral -->
+    <div class="flex h-screen">
+        <nav class="w-64 bg-blue-600 text-white p-5 flex flex-col">
+            <h1 class="text-2xl font-bold mb-6"><i class="fas fa-ticket-alt"></i> Ticket Manager</h1>
+            <a href="index.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🏠 Inicio</a>
+            <a href="create-ticket.html" class="mb-3 bg-blue-500 p-2 rounded">🎫 Crear Ticket</a>
+            <a href="track-ticket.html" class="mb-3 hover:bg-blue-500 p-2 rounded">🔍 Seguimiento</a>
+            <a href="admin.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📊 Dashboard</a>
+            <a href="reports.html" class="mb-3 hover:bg-blue-500 p-2 rounded">📈 Reportes</a>
         </nav>
-        <div class="flex items-center space-x-4">
-            <span id="userName"></span>
-            <button id="logoutButton" class="hidden bg-red-500 text-white px-4 py-2 rounded">Cerrar Sesión</button>
+        
+        <!-- Contenido Principal -->
+        <div class="flex-1 p-10">
+            <header class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold">Crear un Ticket</h2>
+                <a href="auth.html" class="bg-blue-600 text-white px-4 py-2 rounded">Iniciar Sesión</a>
+            </header>
+            
+            <!-- Formulario de Creación de Ticket -->
+            <section class="mt-10 bg-white p-6 shadow-lg rounded-lg max-w-lg mx-auto">
+                <h3 class="text-xl font-semibold mb-4">Por favor, completa la información</h3>
+                <form id="ticketForm">
+                    <input id="nombre" type="text" placeholder="Nombre" required class="w-full p-2 mb-3 border rounded">
+                    <input id="email" type="email" placeholder="Email" required class="w-full p-2 mb-3 border rounded">
+                    <input id="asunto" type="text" placeholder="Asunto" required class="w-full p-2 mb-3 border rounded">
+                    <textarea id="descripcion" placeholder="Describe tu problema" required class="w-full p-2 mb-3 border rounded"></textarea>
+                    <select id="prioridad" class="w-full p-2 mb-3 border rounded">
+                        <option value="Baja">Prioridad Baja</option>
+                        <option value="Media">Prioridad Media</option>
+                        <option value="Alta">Prioridad Alta</option>
+                    </select>
+                    <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Enviar Ticket</button>
+                </form>
+            </section>
         </div>
-    </header>
-    <div id="loginSection" class="w-full max-w-md mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg hidden">
-        <h2 class="text-xl font-bold mb-4 text-center">Iniciar Sesión</h2>
-        <form id="loginForm">
-            <input id="email" type="email" placeholder="Correo" required class="w-full p-2 mb-2 border rounded">
-            <input id="password" type="password" placeholder="Contraseña" required class="w-full p-2 mb-4 border rounded">
-            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Ingresar</button>
-        </form>
     </div>
-    <div id="adminSection" class="hidden w-full max-w-4xl mt-6 p-6 bg-white shadow-lg rounded-lg mx-auto">
-        <div id="ticketsContainer"></div>
-    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center p-4 mt-10">
+        <p>&copy; 2025 Ticket Manager. Todos los derechos reservados.</p>
+    </footer>
 </body>
 </html>
