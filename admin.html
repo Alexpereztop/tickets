@@ -77,8 +77,6 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.archivado !== archivados) return;
-                    const prioridadColor = data.prioridad === 'Alta' ? 'text-red-500' : data.prioridad === 'Media' ? 'text-yellow-500' : 'text-green-500';
-                    let opcionesUsuarios = usuariosDisponibles.map(user => `<option value='${user}' ${data.asignadoA === user ? 'selected' : ''}>${user}</option>`).join("");
                     ticketsContainer.innerHTML += `
                         <div class='p-6 bg-white shadow-lg rounded-lg mb-4'>
                             <h3 class='text-lg font-bold mb-2'><i class="fas fa-ticket-alt"></i> ${data.asunto}</h3>
@@ -87,6 +85,9 @@
                         </div>`;
                 });
             }
+
+            archivedTicketsLink.addEventListener("click", () => cargarTickets(true));
+            activeTicketsLink.addEventListener("click", () => cargarTickets(false));
         });
     </script>
 </head>
@@ -97,11 +98,12 @@
             <a id="activeTicketsLink" href="#" class="mr-4 text-white hover:underline">Tickets Activos</a>
             <a id="archivedTicketsLink" href="#" class="text-white hover:underline">Tickets Archivados</a>
         </nav>
-        <button id="loginButton" class="bg-green-500 text-white px-4 py-2 rounded">Iniciar Sesión</button>
-        <button id="logoutButton" class="hidden bg-red-500 text-white px-4 py-2 rounded">Cerrar Sesión</button>
-        <span id="userName" class="ml-4"></span>
+        <div class="flex items-center space-x-4">
+            <span id="userName"></span>
+            <button id="logoutButton" class="hidden bg-red-500 text-white px-4 py-2 rounded">Cerrar Sesión</button>
+        </div>
     </header>
-    <div id="loginSection" class="w-full max-w-md mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+    <div id="loginSection" class="w-full max-w-md mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg hidden">
         <h2 class="text-xl font-bold mb-4 text-center">Iniciar Sesión</h2>
         <form id="loginForm">
             <input id="email" type="email" placeholder="Correo" required class="w-full p-2 mb-2 border rounded">
